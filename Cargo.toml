@@ -1,0 +1,13 @@
+[package]
+name = "artnet_protocol"
+version = "0.1.0"
+authors = ["Victor Koenders <victor.koenders@gmail.com>"]
+description = "A 1:1 implementation of the ArtNet protocol"
+license = "MIT"
+documentation = "https://docs.rs/artnet_protocol"
+repository = "https://github.com/trangar/artnet_protocol"
+
+[dependencies]
+bitflags = "1.0"
+byteorder = "1.2"
+failure = "0.1"
