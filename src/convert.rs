@@ -108,9 +108,9 @@ macro_rules! convert_primitive {
 
 convert_primitive!(u16, read_u16, write_u16);
 convert_primitive!([u8; 2]);
+convert_primitive!([u8; 3]);
 convert_primitive!([u8; 4]);
 convert_primitive!([u8; 6]);
-convert_primitive!([u8; 16]);
 convert_primitive!([u8; 18]);
 convert_primitive!([u8; 26]);
 convert_primitive!([u8; 64]);

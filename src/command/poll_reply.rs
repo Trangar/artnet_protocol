@@ -20,11 +20,11 @@ data_structure!{
         #[doc = "This field contains the firmware version of the User Bios Extension Area (UBEA). If the UBEA is not programmed, this field contains zero."]
         pub ubea_version: u8,
         #[doc = "General Status register. Will be expanded on in the future."]
-        pub status_1: [u8; 2],
+        pub status_1: u8,
         #[doc = "The ESTA manufacturer code. These codes are used to represent equipment manufacturer. They are assigned by ESTA. This field can be interpreted as two ASCII bytes representing the manufacturer initials."]
         pub esta_code: u16,
         #[doc = "The array represents a null terminated short name for the Node. The Controller uses the ArtAddress packet to program this string. Max length is 17 characters plus the null. This is a fixed length field, although the string it contains can be shorter than the field."]
-        pub short_name: [u8; 16],
+        pub short_name: [u8; 18],
         #[doc = "The array represents a null terminated long name for the Node. The Controller uses the ArtAddress packet to program this string. Max length is 63 characters plus the null. This is a fixed length field, although the string it contains can be shorter than the field."]
         pub long_name: [u8; 64],
         #[doc = "The array is a textual report of the Node’s operating status or operational errors. It is primarily intended for ‘engineering’ data rather than ‘end user’ data. The field is formatted as: “#xxxx [yyyy..] zzzzz…” xxxx is a hex status code as defined in Table 3. yyyy is a decimal counter that increments every time the Node sends an ArtPollResponse. This allows the controller to monitor event changes in the Node. zzzz is an English text string defining the status. This is a fixed length field, although the string it contains can be shorter than the field."]
@@ -48,7 +48,7 @@ data_structure!{
         #[doc = "If the Node supports remote trigger inputs, this byte represents the trigger values. The Node is responsible for ‘debouncing’ inputs. When the ArtPollReply is set to transmit automatically, (TalkToMe Bit 1), the ArtPollReply will be sent on both key down and key up events. However, the Controller should not assume that only one bit position has changed. The Remote inputs are used for remote event triggering or cueing."]
         pub sw_remote: u8,
         #[doc(hidden)]
-        pub spare: [u8; 4],
+        pub spare: [u8; 3],
         #[doc = "The Style code defines the equipment style of the device."]
         pub style: u8,
         #[doc = "MAC Address. Set to zero if node cannot supply this information."]
