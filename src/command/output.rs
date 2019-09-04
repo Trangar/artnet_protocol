@@ -1,4 +1,4 @@
-use command::ARTNET_PROTOCOL_VERSION;
+use crate::command::ARTNET_PROTOCOL_VERSION;
 
 data_structure! {
     #[derive(Debug)]

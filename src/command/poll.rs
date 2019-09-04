@@ -1,4 +1,4 @@
-use ArtTalkToMe;
+use crate::ArtTalkToMe;
 
 data_structure! {
     #[derive(Debug)]

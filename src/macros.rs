@@ -18,7 +18,7 @@ macro_rules! data_structure {
 
         impl $name {
             /// Convert this struct to a byte array.
-            pub fn to_bytes(&self) -> ::Result<Vec<u8>> {
+            pub fn to_bytes(&self) -> crate::Result<Vec<u8>> {
                 use crate::convert::Convertable;
                 use crate::Error;
 
@@ -31,7 +31,7 @@ macro_rules! data_structure {
             }
 
             /// Convert a byte array to an instance of this struct.
-            pub fn from(data: &[u8]) -> ::Result<$name> {
+            pub fn from(data: &[u8]) -> crate::Result<$name> {
                 use crate::convert::Convertable;
                 use crate::Error;
 
