@@ -19,26 +19,26 @@ macro_rules! data_structure {
         impl $name {
             /// Convert this struct to a byte array.
             pub fn to_bytes(&self) -> ::Result<Vec<u8>> {
-                use convert::Convertable;
-                use failure::ResultExt;
+                use crate::convert::Convertable;
+                use crate::Error;
 
                 let mut result = Vec::new();
                 $(
                     self.$field.into_buffer(&mut result)
-                        .context(concat!("Could not serialize field ", stringify!($name), "::", stringify!($field)))?;
-                )*;
+                        .map_err(|e| Error::SerializeError(concat!("Could not serialize field ", stringify!($name), "::", stringify!($field)), Box::new(e)))?;
+                )*
                 Ok(result)
             }
 
             /// Convert a byte array to an instance of this struct.
             pub fn from(data: &[u8]) -> ::Result<$name> {
-                use convert::Convertable;
-                use failure::ResultExt;
+                use crate::convert::Convertable;
+                use crate::Error;
 
                 let mut cursor = ::std::io::Cursor::new(data);
                 $(
                     let $field: $ty = Convertable::from_cursor(&mut cursor)
-                        .context(concat!("Could not deserialize field ", stringify!($name), "::", stringify!($field)))?;
+                        .map_err(|e| Error::DeserializeError(concat!("Could not deserialize field ", stringify!($name), "::", stringify!($field)), Box::new(e)))?;
                 )*
                 Ok($name {
                     $($field, )*

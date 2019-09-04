@@ -1,6 +1,6 @@
 use command::ARTNET_PROTOCOL_VERSION;
 
-data_structure!{
+data_structure! {
     #[derive(Debug)]
     #[doc = "ArtDmx is the data packet used to transfer DMX512 data. The format is identical for Node to Controller, Node to Node and Controller to Node."]
     #[doc = ""]

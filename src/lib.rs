@@ -33,23 +33,19 @@
 //! ```
 #![deny(missing_docs)]
 
-/// Re-export of the failure crate that this library uses
-#[macro_use]
-pub extern crate failure;
 /// Re-export of the bitflags crate that this library uses
 #[macro_use]
 pub extern crate bitflags;
 /// Re-export of the byteorder crate that this library uses
 pub extern crate byteorder;
 
-/// The result that this crate uses
-pub type Result<T> = std::result::Result<T, failure::Error>;
-
 #[macro_use]
 mod macros;
 mod command;
 mod convert;
 mod enums;
+mod error;
 
-pub use command::*;
-pub use enums::ArtTalkToMe;
+pub use crate::command::*;
+pub use crate::enums::ArtTalkToMe;
+pub use crate::error::*;

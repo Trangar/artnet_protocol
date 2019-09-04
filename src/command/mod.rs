@@ -2,9 +2,8 @@ mod output;
 mod poll;
 mod poll_reply;
 
+use crate::{Error, Result};
 use byteorder::{ByteOrder, LittleEndian, WriteBytesExt};
-use failure::ResultExt;
-use Result;
 
 pub use self::output::Output;
 pub use self::poll::Poll;
@@ -139,7 +138,9 @@ impl ArtCommand {
         // Append Art-Net\0 header
         result.extend_from_slice(ARTNET_HEADER);
         // Append the opcode of this enum
-        result.write_u16::<LittleEndian>(opcode)?;
+        result
+            .write_u16::<LittleEndian>(opcode)
+            .map_err(Error::CursorEof)?;
 
         result.extend_from_slice(&data);
 
@@ -149,10 +150,10 @@ impl ArtCommand {
     /// Convert an a byte buffer to a command.
     pub fn from_buffer(buffer: &[u8]) -> Result<ArtCommand> {
         if buffer.len() < 13 {
-            bail!("Message too short");
+            return Err(Error::MessageTooShort(buffer.to_vec()));
         }
         if &buffer[..8] != ARTNET_HEADER {
-            bail!("Invalid artnet header");
+            return Err(Error::InvalidArtnetHeader(buffer.to_vec()));
         }
 
         let opcode = LittleEndian::read_u16(&buffer[8..10]);
@@ -165,16 +166,16 @@ impl ArtCommand {
 
     fn opcode_to_enum(code: u16, data: &[u8]) -> Result<ArtCommand> {
         Ok(match code {
-            0x2000 => {
-                ArtCommand::Poll(Poll::from(data).context("Could not read ArtCommand::Poll")?)
-            }
+            0x2000 => ArtCommand::Poll(
+                Poll::from(data).map_err(|e| Error::OpcodeError("Poll", Box::new(e)))?,
+            ),
             0x2100 => ArtCommand::PollReply(Box::new(
-                PollReply::from(data).context("Could not read ArtCommand::PollReply")?,
+                PollReply::from(data).map_err(|e| Error::OpcodeError("PollReply", Box::new(e)))?,
             )),
             0x2300 => ArtCommand::DiagData,
             0x2400 => ArtCommand::Command,
             0x5000 => ArtCommand::Output(
-                Output::from(data).context("Could not read ArtCommand::Output)")?,
+                Output::from(data).map_err(|e| Error::OpcodeError("Output", Box::new(e)))?,
             ),
             0x5100 => ArtCommand::Nzs,
             0x5200 => ArtCommand::Sync,
@@ -206,7 +207,7 @@ impl ArtCommand {
             0x9900 => ArtCommand::OpTrigger,
             0x9A00 => ArtCommand::OpDirectory,
             0x9B00 => ArtCommand::OpDirectoryReply,
-            _ => bail!("Unknown opcode: {:X}", code),
+            _ => return Err(Error::UnknownOpcode(code)),
         })
     }
 

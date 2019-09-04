@@ -2,7 +2,7 @@ use std::fmt;
 use std::net::Ipv4Addr;
 use std::str;
 
-data_structure!{
+data_structure! {
     #[doc = "Gets send by the nodes in the network as a response to the Poll message"]
     pub struct PollReply {
         #[doc = "The IP address of the node"]
@@ -82,8 +82,8 @@ impl fmt::Debug for PollReply {
             .field("ubea_version", &self.ubea_version)
             .field("status_1", &self.status_1)
             .field("esta_code", &self.esta_code)
-            .field("short_name", &short_name.trim_right_matches('\0'))
-            .field("long_name", &long_name.trim_right_matches('\0'))
+            .field("short_name", &short_name.trim_end_matches('\0'))
+            .field("long_name", &long_name.trim_end_matches('\0'))
             .field("node_report", &&self.node_report[..])
             .field("num_ports", &self.num_ports)
             .field("port_types", &self.port_types)

@@ -1,7 +1,7 @@
-use byteorder::ReadBytesExt;
-use convert::Convertable;
+use crate::byteorder::ReadBytesExt;
+use crate::convert::Convertable;
+use crate::{Error, Result};
 use std::io::Cursor;
-use Result;
 
 bitflags! {
     /// The TalkToMe flag, as to be used in the `Poll` and `PollReply` message
@@ -25,7 +25,7 @@ bitflags! {
 
 impl Convertable for ArtTalkToMe {
     fn from_cursor(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
-        let b = cursor.read_u8()?;
+        let b = cursor.read_u8().map_err(Error::CursorEof)?;
         Ok(ArtTalkToMe::from_bits_truncate(b))
     }
     fn into_buffer(&self, buffer: &mut Vec<u8>) -> Result<()> {
