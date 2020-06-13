@@ -51,13 +51,13 @@ macro_rules! data_structure {
         fn test_encode_decode() {
             let start = $name {
                 $(
-                    $field: ::convert::Convertable::get_test_value(),
+                    $field: crate::convert::Convertable::get_test_value(),
                 )*
             };
             let bytes = start.to_bytes().expect("Could not serialize");
             let end = $name::from(&bytes).expect("Could not deserialize");
             $(
-                assert!(::convert::Convertable::is_equal(&start.$field, &end.$field));
+                assert!(crate::convert::Convertable::is_equal(&start.$field, &end.$field));
             )*
         }
     };

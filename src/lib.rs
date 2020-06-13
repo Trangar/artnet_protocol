@@ -1,7 +1,10 @@
 //! Contains the [ArtCommand](struct.ArtCommand.html) enum which holds the entire ArtNet protocol v4, as per [https://artisticlicence.com/WebSiteMaster/User%20Guides/art-net.pdf](https://artisticlicence.com/WebSiteMaster/User%20Guides/art-net.pdf)
 //!
-//! ```rust
-//! let socket = UdpSocket::bind(("0.0.0.0", 6454))?;
+//! ```rust,no_run
+//! use artnet_protocol::*;
+//! use std::net::{UdpSocket, ToSocketAddrs};
+//!
+//! let socket = UdpSocket::bind(("0.0.0.0", 6454)).unwrap();
 //! let broadcast_addr = ("255.255.255.255", 6454).to_socket_addrs().unwrap().next().unwrap();
 //! socket.set_broadcast(true).unwrap();
 //! let buff = ArtCommand::Poll(Poll::default()).into_buffer().unwrap();
@@ -24,7 +27,7 @@
 //!                 data: vec![1, 2, 3, 4, 5], // The data we're sending to the node
 //!                 ..Output::default()
 //!             });
-//!             let bytes = command.into_bytes().unwrap();
+//!             let bytes = command.into_buffer().unwrap();
 //!             socket.send_to(&bytes, &addr).unwrap();
 //!         },
 //!         _ => {}
