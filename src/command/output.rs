@@ -1,3 +1,4 @@
+use crate::PortAddress;
 use crate::{command::ARTNET_PROTOCOL_VERSION, convert::Convertable, Error, Result};
 use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
 use std::io::Cursor;
@@ -25,7 +26,7 @@ data_structure! {
         #[doc = "The physical input port from which DMX512 data was input. This field is for information only. Use Universe for data routing"]
         pub physical: u8,
         #[doc = "The 15 bit Port-Address to which this packet is destined"]
-        pub subnet: u16,
+        pub subnet: PortAddress,
         #[doc = "The length of the message, set by the artnet library itself"]
         pub length: BigEndianLength<Output>,
         #[doc = "A variable length array of DMX512 lighting data"]
@@ -39,7 +40,7 @@ impl Default for Output {
             version: ARTNET_PROTOCOL_VERSION,
             sequence: 0,
             physical: 0,
-            subnet: 0,
+            subnet: 1.into(),
             length: BigEndianLength::default(),
             data: PaddedData::default(),
         }
