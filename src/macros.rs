@@ -24,7 +24,7 @@ macro_rules! data_structure {
 
                 let mut result = Vec::new();
                 $(
-                    self.$field.into_buffer(&mut result)
+                    self.$field.into_buffer(&mut result, &self)
                         .map_err(|e| Error::SerializeError(concat!("Could not serialize field ", stringify!($name), "::", stringify!($field)), Box::new(e)))?;
                 )*
                 Ok(result)
@@ -37,7 +37,7 @@ macro_rules! data_structure {
 
                 let mut cursor = ::std::io::Cursor::new(data);
                 $(
-                    let $field: $ty = Convertable::from_cursor(&mut cursor)
+                    let $field: $ty = Convertable::<$name>::from_cursor(&mut cursor)
                         .map_err(|e| Error::DeserializeError(concat!("Could not deserialize field ", stringify!($name), "::", stringify!($field)), Box::new(e)))?;
                 )*
                 Ok($name {
@@ -51,13 +51,13 @@ macro_rules! data_structure {
         fn test_encode_decode() {
             let start = $name {
                 $(
-                    $field: crate::convert::Convertable::get_test_value(),
+                    $field: crate::convert::Convertable::<$name>::get_test_value(),
                 )*
             };
             let bytes = start.to_bytes().expect("Could not serialize");
             let end = $name::from(&bytes).expect("Could not deserialize");
             $(
-                assert!(crate::convert::Convertable::is_equal(&start.$field, &end.$field));
+                assert!(crate::convert::Convertable::<$name>::is_equal(&start.$field, &end.$field));
             )*
         }
     };

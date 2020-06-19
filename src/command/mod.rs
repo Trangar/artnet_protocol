@@ -150,7 +150,10 @@ impl ArtCommand {
     /// Convert an a byte buffer to a command.
     pub fn from_buffer(buffer: &[u8]) -> Result<ArtCommand> {
         if buffer.len() < 13 {
-            return Err(Error::MessageTooShort(buffer.to_vec()));
+            return Err(Error::MessageSizeInvalid {
+                message: buffer.to_vec(),
+                allowed_size: 13..1024, // I'm not sure what the actually allowed size is of an artnet packet, if this is wrong feel free to correct it
+            });
         }
         if &buffer[..8] != ARTNET_HEADER {
             return Err(Error::InvalidArtnetHeader(buffer.to_vec()));

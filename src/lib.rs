@@ -23,8 +23,7 @@
 //!         ArtCommand::PollReply(reply) => {
 //!             // This is an ArtNet node on the network. We can send commands to it like this:
 //!             let command = ArtCommand::Output(Output {
-//!                 length: 5, // must match your data.len()
-//!                 data: vec![1, 2, 3, 4, 5], // The data we're sending to the node
+//!                 data: vec![1, 2, 3, 4, 5].into(), // The data we're sending to the node
 //!                 ..Output::default()
 //!             });
 //!             let bytes = command.into_buffer().unwrap();

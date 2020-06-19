@@ -1,4 +1,6 @@
-use crate::command::ARTNET_PROTOCOL_VERSION;
+use crate::{command::ARTNET_PROTOCOL_VERSION, convert::Convertable, Error, Result};
+use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
+use std::{io::Cursor, sync::RwLock};
 
 data_structure! {
     #[derive(Debug)]
@@ -24,12 +26,10 @@ data_structure! {
         pub physical: u8,
         #[doc = "The 15 bit Port-Address to which this packet is destined"]
         pub subnet: u16,
-        #[doc = "The length of the DMX512 data array. This value should be an even number in the range 2 – 512."]
-        #[doc = ""]
-        #[doc = "It represents the number of DMX512 channels encoded in packet. NB: Products which convert Art-Net to DMX512 may opt to always send 512 channels."]
-        pub length: u16,
+        #[doc = "The length of the message, set by the artnet library itself"]
+        pub length: BigEndianLength<Output>,
         #[doc = "A variable length array of DMX512 lighting data"]
-        pub data: Vec<u8>,
+        pub data: PaddedData,
     }
 }
 
@@ -40,8 +40,192 @@ impl Default for Output {
             sequence: 0,
             physical: 0,
             subnet: 0,
-            length: 0,
-            data: Vec::new(),
+            length: BigEndianLength::default(),
+            data: PaddedData::default(),
         }
     }
+}
+
+#[derive(Default)]
+pub struct PaddedData {
+    inner: RwLock<Vec<u8>>,
+}
+
+impl PaddedData {
+    fn len(&self) -> usize {
+        self.inner.read().unwrap().len()
+    }
+    fn len_rounded_up(&self) -> usize {
+        let mut len = self.inner.read().unwrap().len();
+        if len % 2 != 0 {
+            len += 1;
+        }
+        len
+    }
+}
+
+impl From<Vec<u8>> for PaddedData {
+    fn from(inner: Vec<u8>) -> Self {
+        Self {
+            inner: RwLock::new(inner),
+        }
+    }
+}
+
+impl std::fmt::Debug for PaddedData {
+    fn fmt(&self, fmt: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(fmt, "{:?}", self.inner.read())
+    }
+}
+
+impl<T> Convertable<T> for PaddedData {
+    fn from_cursor(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
+        let remaining = cursor.get_ref();
+        let inner = remaining[cursor.position() as usize..].to_vec();
+        Ok(Self {
+            inner: RwLock::new(inner),
+        })
+    }
+
+    fn into_buffer(&self, buffer: &mut Vec<u8>, _: &T) -> Result<()> {
+        let len = self.len();
+        if len == 0 {
+            // packets must be between 2 and 512 bytes, 1 gets padded up, but 0 is invalid
+            return Err(Error::MessageSizeInvalid {
+                message: vec![],
+                allowed_size: 2..512,
+            });
+        }
+        if len > 512 {
+            // packets must be between 2 and 512 bytes
+            let inner = self.inner.read().unwrap().clone();
+            return Err(Error::MessageSizeInvalid {
+                message: inner,
+                allowed_size: 2..512,
+            });
+        }
+
+        if len % 2 != 0 {
+            self.inner.write().unwrap().push(0);
+        }
+        let read_lock = self.inner.read().unwrap();
+        buffer.extend_from_slice(&read_lock[..]);
+        Ok(())
+    }
+    fn get_test_value() -> Self {
+        PaddedData {
+            inner: RwLock::new(vec![1, 2, 3, 4]),
+        }
+    }
+    fn is_equal(&self, other: &Self) -> bool {
+        let self_lock = self.inner.read().unwrap();
+        let self_data: &[u8] = &*self_lock;
+
+        let other_lock = other.inner.read().unwrap();
+        let other_data: &[u8] = &*other_lock;
+
+        self_data == other_data
+    }
+}
+
+#[derive(Default)]
+pub struct BigEndianLength<T> {
+    parsed_length: Option<u16>,
+    _pd: std::marker::PhantomData<T>,
+}
+
+impl<T> std::fmt::Debug for BigEndianLength<T> {
+    fn fmt(&self, fmt: &mut std::fmt::Formatter) -> std::fmt::Result {
+        if let Some(len) = &self.parsed_length {
+            write!(fmt, "{}", len)
+        } else {
+            write!(fmt, "Unknown (set during parsing)")
+        }
+    }
+}
+
+impl<T> std::ops::Deref for BigEndianLength<T> {
+    type Target = u16;
+
+    fn deref(&self) -> &u16 {
+        self.parsed_length.as_ref().unwrap_or(&0)
+    }
+}
+
+impl Convertable<Output> for BigEndianLength<Output> {
+    fn from_cursor(cursor: &mut std::io::Cursor<&[u8]>) -> crate::Result<Self> {
+        let length = cursor.read_u16::<BigEndian>().map_err(Error::CursorEof)?;
+        Ok(BigEndianLength {
+            parsed_length: Some(length),
+            _pd: std::marker::PhantomData,
+        })
+    }
+    fn into_buffer(&self, buffer: &mut Vec<u8>, context: &Output) -> crate::Result<()> {
+        let len = context.data.len_rounded_up() as u16;
+        buffer.write_u16::<BigEndian>(len).map_err(Error::CursorEof)
+    }
+    fn get_test_value() -> Self {
+        Default::default()
+    }
+    fn is_equal(&self, other: &Self) -> bool {
+        if (self.parsed_length.is_none() && other.parsed_length.is_some())
+            || (self.parsed_length.is_some() && other.parsed_length.is_none())
+        {
+            // one of the two is parsed, but the other one isn't
+            // They are not strictly equal, but we're testing for equality-after-parsing
+            // and we don't know the length beforehand
+            true
+        } else {
+            self.parsed_length == other.parsed_length
+        }
+    }
+}
+
+#[test]
+fn test_invalid_length() {
+    use crate::ArtCommand;
+
+    let command = ArtCommand::Output(Output {
+        data: vec![0xff; 512].into(),
+        ..Output::default()
+    });
+    let buffer = command.into_buffer().unwrap();
+    // #6: length needs to be encoded in big endian
+    assert_eq!(&buffer[0x10..=0x11], &[2, 0]);
+
+    // #7.1: packets need to be an even number
+    fn get_data(command: &ArtCommand) -> &PaddedData {
+        if let ArtCommand::Output(output) = command {
+            &output.data
+        } else {
+            unreachable!()
+        }
+    };
+    let command = ArtCommand::Output(Output {
+        data: vec![0xff].into(),
+        ..Output::default()
+    });
+
+    // Initially it will be 1
+    assert_eq!(get_data(&command).len(), 1);
+    // But the padded length is 2
+    assert_eq!(get_data(&command).len_rounded_up(), 2);
+
+    let buffer = command.into_buffer().unwrap();
+    // The data written is 2 bytes
+    assert_eq!(&buffer[0x10..=0x11], &[0, 2]);
+
+    // #7.2: packets need to be at least 2 bytes
+    let command = ArtCommand::Output(Output {
+        data: vec![].into(),
+        ..Output::default()
+    });
+    assert!(command.into_buffer().is_err());
+
+    // #7.3: packets need to be at most 512 bytes
+    let command = ArtCommand::Output(Output {
+        data: vec![0xff; 513].into(),
+        ..Output::default()
+    });
+    assert!(command.into_buffer().is_err());
 }
