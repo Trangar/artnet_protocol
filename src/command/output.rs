@@ -172,10 +172,43 @@ impl Convertable<Output> for BigEndianLength<Output> {
     }
 }
 
-#[test]
-fn test_invalid_length() {
+#[cfg(test)]
+mod tests {
+    use super::*;
     use crate::ArtCommand;
 
+    #[test]
+    fn create_single_dmx_value_art_dmx_packet() {
+        let command = ArtCommand::Output(Output {
+            data: vec![255].into(), // The data we're sending to the node
+            ..Output::default()
+        });
+        let bytes = command.into_buffer().unwrap();
+        let comparison = vec![
+            65, 114, 116, 45, 78, 101, 116, 0, 0, 80, 0, 14, 0, 0, 1, 0, 0, 2, 255, 0,
+        ]; //is padded with zero to even length of two
+        assert!(bytes == comparison)
+    }
+
+    #[test]
+    fn create_512_dmx_values_art_dmx_packet() {
+        let command = ArtCommand::Output(Output {
+            data: vec![128; 512].into(), // The data we're sending to the node
+            ..Output::default()
+        });
+        let bytes = command.into_buffer().unwrap();
+        let comparison = vec![
+            vec![
+                65, 114, 116, 45, 78, 101, 116, 0, 0, 80, 0, 14, 0, 0, 1, 0, 2, 0,
+            ],
+            vec![128; 512],
+        ]
+        .concat(); //is padded with zero to even length of two
+        assert!(bytes == comparison)
+    }
+
+#[test]
+fn test_invalid_length() {
     let command = ArtCommand::Output(Output {
         data: vec![0xff; 512].into(),
         ..Output::default()
@@ -219,4 +252,7 @@ fn test_invalid_length() {
         ..Output::default()
     });
     assert!(command.into_buffer().is_err());
+}
+
+    }
 }

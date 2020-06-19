@@ -50,16 +50,6 @@ impl TryFrom<i32> for PortAddress {
     }
 }
 
-// impl PortAddress {
-//     #[allow(dead_code)]
-//     pub fn to_be_bytes(self) -> [u8; 2] {
-//         self.0.to_be_bytes()
-//     }
-//     pub fn to_le_bytes(self) -> [u8; 2] {
-//         self.0.to_le_bytes()
-//     }
-// }
-
 impl<T> Convertable<T> for PortAddress {
     fn from_cursor(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         let number = cursor
@@ -86,13 +76,6 @@ impl<T> Convertable<T> for PortAddress {
 #[cfg(test)]
 mod tests {
     use super::*;
-    #[test]
-    // fn port_address_to_bytes() {
-    //     use std::convert::TryInto;
-    //     let a: PortAddress = 0x1234.try_into().unwrap();
-    //     assert!(a.to_be_bytes() == [0x12, 0x34]);
-    //     assert!(a.to_le_bytes() == [0x34, 0x12]);
-    // }
     #[test]
     fn port_address_bound_check() {
         use std::convert::TryInto;
