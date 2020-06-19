@@ -32,6 +32,9 @@ pub enum Error {
 
     /// Unknown opcode ID
     UnknownOpcode(u16),
+
+    /// The Art-Net PortAddress was not from 0 to 32_767
+    InvalidPortAddress(i32),
 }
 
 impl std::fmt::Display for Error {
@@ -55,6 +58,11 @@ impl std::fmt::Display for Error {
                 write!(fmt, "Could not parse opcode {:?}: {}", opcode, inner)
             }
             Error::UnknownOpcode(opcode) => write!(fmt, "Unknown opcode 0x{:X}", opcode),
+            Error::InvalidPortAddress(wrong_number) => write!(
+                fmt,
+                "Art-Net PortAddress must be from 0 to 32_767. Got {:?}",
+                wrong_number
+            ),
         }
     }
 }

@@ -266,7 +266,7 @@ mod tests {
         });
         let bytes = command.into_buffer().unwrap();
         let comparison = vec![
-            65, 114, 116, 45, 78, 101, 116, 0, 0, 80, 0, 14, 0, 0, 0, 0, 0, 2, 255, 0,
+            65, 114, 116, 45, 78, 101, 116, 0, 0, 80, 0, 14, 0, 0, 1, 0, 0, 2, 255, 0,
         ]; //is padded with zero to even length of two
         assert!(bytes == comparison)
     }
@@ -279,7 +279,7 @@ mod tests {
             data: vec![].into(),
             ..Output::default()
         });
-        let bytes = command.into_buffer().unwrap(); // panic here
+        let _bytes = command.into_buffer().unwrap(); // panic here
     }
 
     #[test]
@@ -290,6 +290,6 @@ mod tests {
             data: vec![255; 513].into(),
             ..Output::default()
         });
-        let bytes = command.into_buffer().unwrap(); // panic here
+        let _bytes = command.into_buffer().unwrap(); // panic here
     }
 }

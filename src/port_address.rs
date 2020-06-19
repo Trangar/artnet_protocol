@@ -1,11 +1,14 @@
+use crate::{convert::Convertable, Error, Result};
+use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
 use std::convert::TryFrom;
+use std::io::Cursor;
 
 /// A `PortAddress` is an unsigned integer from 0 to 32_767 (15-bit).
 ///
 /// The trait `From` is implemented for `u8`and `TryFrom` for `u16` and `i32`:
 ///
 /// ```
-/// use artnet_packer::PortAddress;
+/// use artnet_protocol::PortAddress;
 /// use std::convert::TryInto;
 /// let a: PortAddress = 1.into(); //convert from u8 never fails
 /// let b: PortAddress = 2u16.try_into().unwrap(); //u16 could fail if too big
@@ -25,54 +28,71 @@ impl From<u8> for PortAddress {
 }
 
 impl TryFrom<u16> for PortAddress {
-    type Error = String;
-    fn try_from(value: u16) -> Result<Self, Self::Error> {
+    type Error = Error;
+    fn try_from(value: u16) -> Result<Self> {
         if value <= 32_767 {
             Ok(PortAddress(value))
         } else {
-            Err(format!(
-                "Art-Net PortAddress must be from 0 to 32767. Got {}",
-                value
-            ))
+            Err(Error::InvalidPortAddress(value.into()))
         }
     }
 }
 
 // support un-annotated literals
 impl TryFrom<i32> for PortAddress {
-    type Error = String;
-    fn try_from(value: i32) -> Result<Self, Self::Error> {
+    type Error = Error;
+    fn try_from(value: i32) -> Result<Self> {
         if value <= 32_767 && value >= 0 {
             Ok(PortAddress(value as u16))
         } else {
-            Err(format!(
-                "Art-Net PortAddress must be from 0 to 32767. Got {}",
-                value
-            ))
+            Err(Error::InvalidPortAddress(value))
         }
     }
 }
 
-impl PortAddress {
-    #[allow(dead_code)]
-    pub fn to_be_bytes(self) -> [u8; 2] {
-        self.0.to_be_bytes()
+// impl PortAddress {
+//     #[allow(dead_code)]
+//     pub fn to_be_bytes(self) -> [u8; 2] {
+//         self.0.to_be_bytes()
+//     }
+//     pub fn to_le_bytes(self) -> [u8; 2] {
+//         self.0.to_le_bytes()
+//     }
+// }
+
+impl<T> Convertable<T> for PortAddress {
+    fn from_cursor(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
+        let number = cursor
+            .read_u16::<LittleEndian>()
+            .map_err(Error::CursorEof)?;
+        PortAddress::try_from(number)
     }
-    pub fn to_le_bytes(self) -> [u8; 2] {
-        self.0.to_le_bytes()
+
+    fn into_buffer(&self, buffer: &mut Vec<u8>, _context: &T) -> Result<()> {
+        buffer
+            .write_u16::<LittleEndian>(self.0)
+            .map_err(Error::CursorEof)
+    }
+
+    fn get_test_value() -> Self {
+        PortAddress::from(1)
+    }
+
+    fn is_equal(&self, other: &Self) -> bool {
+        self == other
     }
 }
+
 #[cfg(test)]
 mod tests {
     use super::*;
     #[test]
-    fn port_address_to_bytes() {
-        use std::convert::TryInto;
-        let a: PortAddress = 0x1234.try_into().unwrap();
-        assert!(a.to_be_bytes() == [0x12, 0x34]);
-        assert!(a.to_le_bytes() == [0x34, 0x12]);
-    }
-
+    // fn port_address_to_bytes() {
+    //     use std::convert::TryInto;
+    //     let a: PortAddress = 0x1234.try_into().unwrap();
+    //     assert!(a.to_be_bytes() == [0x12, 0x34]);
+    //     assert!(a.to_le_bytes() == [0x34, 0x12]);
+    // }
     #[test]
     fn port_address_bound_check() {
         use std::convert::TryInto;
