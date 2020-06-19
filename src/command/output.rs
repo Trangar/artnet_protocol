@@ -1,6 +1,6 @@
 use crate::{command::ARTNET_PROTOCOL_VERSION, convert::Convertable, Error, Result};
 use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
-use std::{io::Cursor, sync::RwLock};
+use std::io::Cursor;
 
 data_structure! {
     #[derive(Debug)]
@@ -48,15 +48,15 @@ impl Default for Output {
 
 #[derive(Default)]
 pub struct PaddedData {
-    inner: RwLock<Vec<u8>>,
+    inner: Vec<u8>,
 }
 
 impl PaddedData {
     fn len(&self) -> usize {
-        self.inner.read().unwrap().len()
+        self.inner.len()
     }
     fn len_rounded_up(&self) -> usize {
-        let mut len = self.inner.read().unwrap().len();
+        let mut len = self.inner.len();
         if len % 2 != 0 {
             len += 1;
         }
@@ -66,15 +66,13 @@ impl PaddedData {
 
 impl From<Vec<u8>> for PaddedData {
     fn from(inner: Vec<u8>) -> Self {
-        Self {
-            inner: RwLock::new(inner),
-        }
+        Self { inner }
     }
 }
 
 impl std::fmt::Debug for PaddedData {
     fn fmt(&self, fmt: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(fmt, "{:?}", self.inner.read())
+        write!(fmt, "{:?}", self.inner)
     }
 }
 
@@ -82,9 +80,7 @@ impl<T> Convertable<T> for PaddedData {
     fn from_cursor(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         let remaining = cursor.get_ref();
         let inner = remaining[cursor.position() as usize..].to_vec();
-        Ok(Self {
-            inner: RwLock::new(inner),
-        })
+        Ok(Self { inner })
     }
 
     fn into_buffer(&self, buffer: &mut Vec<u8>, _: &T) -> Result<()> {
@@ -98,33 +94,27 @@ impl<T> Convertable<T> for PaddedData {
         }
         if len > 512 {
             // packets must be between 2 and 512 bytes
-            let inner = self.inner.read().unwrap().clone();
+            let inner = self.inner.clone();
             return Err(Error::MessageSizeInvalid {
                 message: inner,
                 allowed_size: 2..512,
             });
         }
 
+        buffer.extend_from_slice(&self.inner[..]);
         if len % 2 != 0 {
-            self.inner.write().unwrap().push(0);
+            // the data of an output needs to be an even size, so we add an additional 0-byte
+            buffer.push(0);
         }
-        let read_lock = self.inner.read().unwrap();
-        buffer.extend_from_slice(&read_lock[..]);
         Ok(())
     }
     fn get_test_value() -> Self {
         PaddedData {
-            inner: RwLock::new(vec![1, 2, 3, 4]),
+            inner: vec![1, 2, 3, 4],
         }
     }
     fn is_equal(&self, other: &Self) -> bool {
-        let self_lock = self.inner.read().unwrap();
-        let self_data: &[u8] = &*self_lock;
-
-        let other_lock = other.inner.read().unwrap();
-        let other_data: &[u8] = &*other_lock;
-
-        self_data == other_data
+        self.inner == other.inner
     }
 }
 
