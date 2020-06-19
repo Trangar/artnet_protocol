@@ -127,7 +127,7 @@ pub const ARTNET_HEADER: &[u8] = b"Art-Net\0";
 /// The protocol version. Anything above [4, 0] seems to work for the devices that this library was tested on.
 ///
 /// If you need a different or configurable protocol version, please open a PR.
-pub const ARTNET_PROTOCOL_VERSION: [u8; 2] = [5, 57];
+pub const ARTNET_PROTOCOL_VERSION: [u8; 2] = [0, 14];
 
 impl ArtCommand {
     /// Convert an ArtCommand in a byte buffer, which can be send to an UDP socket.
