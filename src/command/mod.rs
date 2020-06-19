@@ -254,3 +254,42 @@ impl ArtCommand {
         })
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn create_single_dmx_value_art_dmx_packet() {
+        let command = ArtCommand::Output(Output {
+            data: vec![255].into(), // The data we're sending to the node
+            ..Output::default()
+        });
+        let bytes = command.into_buffer().unwrap();
+        let comparison = vec![
+            65, 114, 116, 45, 78, 101, 116, 0, 0, 80, 0, 14, 0, 0, 0, 0, 0, 2, 255, 0,
+        ]; //is padded with zero to even length of two
+        assert!(bytes == comparison)
+    }
+
+    #[test]
+    #[should_panic]
+    fn zero_output_data_doesnt_work() {
+        // I think we should have a non-panic failure mechanism here already!
+        let command = ArtCommand::Output(Output {
+            data: vec![].into(),
+            ..Output::default()
+        });
+        let bytes = command.into_buffer().unwrap(); // panic here
+    }
+
+    #[test]
+    #[should_panic]
+    fn too_long_output_data_doesnt_work() {
+        // I think we should have a non-panic failure mechanism here already!
+        let command = ArtCommand::Output(Output {
+            data: vec![255; 513].into(),
+            ..Output::default()
+        });
+        let bytes = command.into_buffer().unwrap(); // panic here
+    }
+}
