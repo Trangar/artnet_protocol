@@ -255,8 +255,7 @@ mod tests {
     }
 
     #[test]
-    fn test_invalid_length_parse() {
-        use crate::ArtCommand;
+    fn parse_invalid_lengths() {
         // ArtDmx packets must have an even length from 2 to 512
 
         // Here length is 1 (uneven should fail)
@@ -271,21 +270,21 @@ mod tests {
         ])
         .is_err());
 
-        // Here length is 514 (over 512 should fail)
-        assert!(ArtCommand::from_buffer(
-            &vec![
-                vec![65, 114, 116, 45, 78, 101, 116, 0, 0, 80, 0, 14, 0, 0, 1, 0, 2, 2,],
-                vec![255; 514],
-            ]
-            .concat()
-        )
-        .is_err());
-
         // Here length is 513 (over 512 and uneven should fail)
         assert!(ArtCommand::from_buffer(
             &vec![
                 vec![65, 114, 116, 45, 78, 101, 116, 0, 0, 80, 0, 14, 0, 0, 1, 0, 2, 1,],
                 vec![255; 513],
+            ]
+            .concat()
+        )
+        .is_err());
+
+        // Here length is 514 (over 512 should fail)
+        assert!(ArtCommand::from_buffer(
+            &vec![
+                vec![65, 114, 116, 45, 78, 101, 116, 0, 0, 80, 0, 14, 0, 0, 1, 0, 2, 2,],
+                vec![255; 514],
             ]
             .concat()
         )
@@ -301,5 +300,28 @@ mod tests {
             .concat()
         )
         .is_err());
+    }
+
+    #[test]
+    fn data_longer_than_length() {
+        // Parser must only parse as many bytes as length tells it to
+        // After that it must ignore all data bytes
+        let packet = &vec![
+            vec![
+                65, 114, 116, 45, 78, 101, 116, 0, 0, 80, 0, 14, 0, 0, 1, 0, 0, 2,
+            ],
+            vec![255; 512],
+        ]
+        .concat();
+        // jump through hoops to compare the results to what we expect...
+        let command = ArtCommand::from_buffer(packet).unwrap();
+        if let ArtCommand::Output(output) = command {
+            assert!(output.version == [0, 14]);
+            assert!(output.sequence == 0);
+            assert!(output.physical == 0);
+            assert!(output.port_address == 1.into());
+            assert!(output.length.parsed_length == Some(2));
+            assert!(output.data.inner == vec![255, 255]);
+        }
     }
 }
