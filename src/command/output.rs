@@ -187,7 +187,7 @@ mod tests {
         let comparison = vec![
             65, 114, 116, 45, 78, 101, 116, 0, 0, 80, 0, 14, 0, 0, 1, 0, 0, 2, 255, 0,
         ]; //is padded with zero to even length of two
-        assert!(bytes == comparison)
+        assert_eq!(bytes, comparison)
     }
 
     #[test]
@@ -204,7 +204,7 @@ mod tests {
             vec![128; 512],
         ]
         .concat(); //is padded with zero to even length of two
-        assert!(bytes == comparison)
+        assert_eq!(bytes, comparison)
     }
 
     #[test]
@@ -316,12 +316,12 @@ mod tests {
         // jump through hoops to compare the results to what we expect...
         let command = ArtCommand::from_buffer(packet).unwrap();
         if let ArtCommand::Output(output) = command {
-            assert!(output.version == [0, 14]);
-            assert!(output.sequence == 0);
-            assert!(output.physical == 0);
-            assert!(output.port_address == 1.into());
-            assert!(output.length.parsed_length == Some(2));
-            assert!(output.data.inner == vec![255, 255]);
+            assert_eq!(output.version, [0, 14]);
+            assert_eq!(output.sequence, 0);
+            assert_eq!(output.physical, 0);
+            assert_eq!(output.port_address, 1.into());
+            assert_eq!(output.length.parsed_length, Some(2));
+            assert_eq!(output.data.inner, vec![255, 255]);
         }
     }
 }
