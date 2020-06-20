@@ -15,6 +15,15 @@ pub enum Error {
     /// Could not deserialize an artnet command
     DeserializeError(&'static str, Box<Error>),
 
+    /// The given message was too short
+    MessageTooShort {
+        /// The message that was being send or received
+        message: Vec<u8>,
+
+        /// The minimal length that is supported
+        min_len: usize,
+    },
+
     /// The given message was too long or too short
     MessageSizeInvalid {
         /// The message that was being send or received
@@ -43,6 +52,12 @@ impl std::fmt::Display for Error {
             Error::CursorEof(inner) => write!(fmt, "Cursor EOF: {}", inner),
             Error::SerializeError(message, inner) => write!(fmt, "{}: {}", message, inner),
             Error::DeserializeError(message, inner) => write!(fmt, "{}: {}", message, inner),
+            Error::MessageTooShort { message, min_len } => write!(
+                fmt,
+                "Message too short, it was {} but artnet expects at least {}",
+                message.len(),
+                min_len
+            ),
             Error::MessageSizeInvalid {
                 message,
                 allowed_size,

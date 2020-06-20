@@ -122,7 +122,7 @@ pub enum ArtCommand {
 }
 
 /// The ArtNet header. This is the first 8 bytes of each message, and contains the text "Art-Net\0"
-pub const ARTNET_HEADER: &[u8] = b"Art-Net\0";
+pub const ARTNET_HEADER: &[u8; 8] = b"Art-Net\0";
 
 /// The protocol version. Anything above [4, 0] seems to work for the devices that this library was tested on.
 ///
@@ -149,13 +149,16 @@ impl ArtCommand {
 
     /// Convert an a byte buffer to a command.
     pub fn from_buffer(buffer: &[u8]) -> Result<ArtCommand> {
-        if buffer.len() < 13 {
-            return Err(Error::MessageSizeInvalid {
+        const MIN_BUFFER_LENGTH: usize = 14;
+
+        if buffer.len() < MIN_BUFFER_LENGTH {
+            return Err(Error::MessageTooShort {
                 message: buffer.to_vec(),
-                allowed_size: 13..1024, // I'm not sure what the actually allowed size is of an artnet packet, if this is wrong feel free to correct it
+                min_len: MIN_BUFFER_LENGTH,
             });
         }
-        if &buffer[..8] != ARTNET_HEADER {
+
+        if !buffer.starts_with(ARTNET_HEADER) {
             return Err(Error::InvalidArtnetHeader(buffer.to_vec()));
         }
 
