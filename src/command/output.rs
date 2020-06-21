@@ -251,100 +251,6 @@ mod tests {
 
     mod parsing {
         use super::*;
-        #[test]
-        fn length_0_should_fail() {
-            // Here length is 0
-            // should fail because it is lower than 2
-            assert!(ArtCommand::from_buffer(&vec![
-                65, 114, 116, 45, 78, 101, 116, 0, 0, 80, 0, 14, 0, 0, 1, 0, 0, 0,
-            ])
-            .is_err());
-        }
-
-        #[test]
-        fn length_1_should_fail() {
-            // Here length is 1
-            // should fail because it is uneven and lower than 2
-            assert!(ArtCommand::from_buffer(&vec![
-                65, 114, 116, 45, 78, 101, 116, 0, 0, 80, 0, 14, 0, 0, 1, 0, 0, 1, 255,
-            ])
-            .is_err());
-        }
-
-        #[test]
-        fn length_3_should_fail() {
-            // Here length is 3
-            // should fail because it is uneven
-            assert!(ArtCommand::from_buffer(&vec![
-                65, 114, 116, 45, 78, 101, 116, 0, 0, 80, 0, 14, 0, 0, 1, 0, 0, 3, 255, 255, 255
-            ])
-            .is_err());
-        }
-
-        #[test]
-        fn length_513_should_fail() {
-            // Here length is 513
-            // should fail because it is uneven and above 512
-            // Here length is 513 (over 512 and uneven should fail)
-            assert!(ArtCommand::from_buffer(
-                &vec![
-                    vec![65, 114, 116, 45, 78, 101, 116, 0, 0, 80, 0, 14, 0, 0, 1, 0, 2, 1,],
-                    vec![255; 513],
-                ]
-                .concat()
-            )
-            .is_err());
-        }
-
-        #[test]
-        fn length_514_should_fail() {
-            // Here length is 514
-            // should fail because it is above 512
-            assert!(ArtCommand::from_buffer(
-                &vec![
-                    vec![65, 114, 116, 45, 78, 101, 116, 0, 0, 80, 0, 14, 0, 0, 1, 0, 2, 2,],
-                    vec![255; 514],
-                ]
-                .concat()
-            )
-            .is_err());
-        }
-
-        #[test]
-        fn data_shorter_than_length_should_fail() {
-            // Here length field claims 512 bytes of data, but only 510 bytes are delivered
-            assert!(ArtCommand::from_buffer(
-                &vec![
-                    vec![65, 114, 116, 45, 78, 101, 116, 0, 0, 80, 0, 14, 0, 0, 1, 0, 2, 0,],
-                    vec![255; 510],
-                ]
-                .concat()
-            )
-            .is_err());
-        }
-
-        #[test]
-        fn data_longer_than_length() {
-            // Parser must only parse as many bytes as length tells it to
-            // After that it must ignore all data bytes
-            let packet = &vec![
-                vec![
-                    65, 114, 116, 45, 78, 101, 116, 0, 0, 80, 0, 14, 0, 0, 1, 0, 0, 2,
-                ],
-                vec![255; 512],
-            ]
-            .concat();
-            // jump through hoops to compare the results to what we expect...
-            let command = ArtCommand::from_buffer(packet).unwrap();
-            if let ArtCommand::Output(output) = command {
-                assert_eq!(output.version, [0, 14]);
-                assert_eq!(output.sequence, 0);
-                assert_eq!(output.physical, 0);
-                assert_eq!(output.port_address, 1.into());
-                assert_eq!(output.length.parsed_length, Some(2));
-                assert_eq!(output.data.inner, vec![255, 255]);
-            }
-        }
 
         #[test]
         fn protver_below_14() {
@@ -363,16 +269,6 @@ mod tests {
                 assert_eq!(output.length.parsed_length, Some(2));
                 assert_eq!(output.data.inner, vec![255, 255]);
             }
-        }
-
-        #[test]
-        fn protver_above_14_should_fail() {
-            // Here protocol version is 15
-            // Any version above 14 should fail because we may not be able to parse it
-            assert!(ArtCommand::from_buffer(&vec![
-                65, 114, 116, 45, 78, 101, 116, 0, 0, 80, 0, 15, 0, 0, 1, 0, 0, 2, 255, 255,
-            ])
-            .is_err());
         }
 
         #[test]
