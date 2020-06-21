@@ -47,7 +47,9 @@ mod command;
 mod convert;
 mod enums;
 mod error;
+mod port_address;
 
 pub use crate::command::*;
 pub use crate::enums::ArtTalkToMe;
 pub use crate::error::*;
+pub use port_address::PortAddress;

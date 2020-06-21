@@ -1,4 +1,4 @@
-use crate::{command::ARTNET_PROTOCOL_VERSION, convert::Convertable, Error, Result};
+use crate::{command::ARTNET_PROTOCOL_VERSION, convert::Convertable, Error, PortAddress, Result};
 use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
 use std::io::Cursor;
 
@@ -25,7 +25,7 @@ data_structure! {
         #[doc = "The physical input port from which DMX512 data was input. This field is for information only. Use Universe for data routing"]
         pub physical: u8,
         #[doc = "The 15 bit Port-Address to which this packet is destined"]
-        pub subnet: u16,
+        pub port_address: PortAddress,
         #[doc = "The length of the message, set by the artnet library itself"]
         pub length: BigEndianLength<Output>,
         #[doc = "A variable length array of DMX512 lighting data"]
@@ -39,7 +39,7 @@ impl Default for Output {
             version: ARTNET_PROTOCOL_VERSION,
             sequence: 0,
             physical: 0,
-            subnet: 0,
+            port_address: 1.into(),
             length: BigEndianLength::default(),
             data: PaddedData::default(),
         }
@@ -171,51 +171,223 @@ impl Convertable<Output> for BigEndianLength<Output> {
     }
 }
 
-#[test]
-fn test_invalid_length() {
+#[cfg(test)]
+mod tests {
+    use super::*;
     use crate::ArtCommand;
 
-    let command = ArtCommand::Output(Output {
-        data: vec![0xff; 512].into(),
-        ..Output::default()
-    });
-    let buffer = command.into_buffer().unwrap();
-    // #6: length needs to be encoded in big endian
-    assert_eq!(&buffer[0x10..=0x11], &[2, 0]);
-
-    // #7.1: packets need to be an even number
-    fn get_data(command: &ArtCommand) -> &PaddedData {
-        if let ArtCommand::Output(output) = command {
-            &output.data
-        } else {
-            unreachable!()
+    mod serialization {
+        use super::*;
+        #[test]
+        fn create_single_dmx_value_art_dmx_packet() {
+            let command = ArtCommand::Output(Output {
+                data: vec![255].into(), // The data we're sending to the node
+                ..Output::default()
+            });
+            let bytes = command.into_buffer().unwrap();
+            let comparison = vec![
+                65, 114, 116, 45, 78, 101, 116, 0, 0, 80, 0, 14, 0, 0, 1, 0, 0, 2, 255, 0,
+            ]; //is padded with zero to even length of two
+            assert_eq!(bytes, comparison)
         }
-    };
-    let command = ArtCommand::Output(Output {
-        data: vec![0xff].into(),
-        ..Output::default()
-    });
+        #[test]
+        fn create_512_dmx_values_art_dmx_packet() {
+            let command = ArtCommand::Output(Output {
+                data: vec![128; 512].into(), // The data we're sending to the node
+                ..Output::default()
+            });
+            let bytes = command.into_buffer().unwrap();
+            let comparison = vec![
+                vec![
+                    65, 114, 116, 45, 78, 101, 116, 0, 0, 80, 0, 14, 0, 0, 1, 0, 2, 0,
+                ],
+                vec![128; 512],
+            ]
+            .concat(); //is padded with zero to even length of two
+            assert_eq!(bytes, comparison)
+        }
+        #[test]
+        fn test_invalid_length() {
+            let command = ArtCommand::Output(Output {
+                data: vec![0xff; 512].into(),
+                ..Output::default()
+            });
+            let buffer = command.into_buffer().unwrap();
+            // #6: length needs to be encoded in big endian
+            assert_eq!(&buffer[0x10..=0x11], &[2, 0]);
+            // #7.1: packets need to be an even number
+            fn get_data(command: &ArtCommand) -> &PaddedData {
+                if let ArtCommand::Output(output) = command {
+                    &output.data
+                } else {
+                    unreachable!()
+                }
+            };
+            let command = ArtCommand::Output(Output {
+                data: vec![0xff].into(),
+                ..Output::default()
+            });
+            // Initially it will be 1
+            assert_eq!(get_data(&command).len(), 1);
+            // But the padded length is 2
+            assert_eq!(get_data(&command).len_rounded_up(), 2);
+            let buffer = command.into_buffer().unwrap();
+            // The data written is 2 bytes
+            assert_eq!(&buffer[0x10..=0x11], &[0, 2]);
+            // #7.2: packets need to be at least 2 bytes
+            let command = ArtCommand::Output(Output {
+                data: vec![].into(),
+                ..Output::default()
+            });
+            assert!(command.into_buffer().is_err());
+            // #7.3: packets need to be at most 512 bytes
+            let command = ArtCommand::Output(Output {
+                data: vec![0xff; 513].into(),
+                ..Output::default()
+            });
+            assert!(command.into_buffer().is_err());
+        }
+    }
 
-    // Initially it will be 1
-    assert_eq!(get_data(&command).len(), 1);
-    // But the padded length is 2
-    assert_eq!(get_data(&command).len_rounded_up(), 2);
+    mod parsing {
+        use super::*;
+        #[test]
+        fn length_0_should_fail() {
+            // Here length is 0
+            // should fail because it is lower than 2
+            assert!(ArtCommand::from_buffer(&vec![
+                65, 114, 116, 45, 78, 101, 116, 0, 0, 80, 0, 14, 0, 0, 1, 0, 0, 0,
+            ])
+            .is_err());
+        }
 
-    let buffer = command.into_buffer().unwrap();
-    // The data written is 2 bytes
-    assert_eq!(&buffer[0x10..=0x11], &[0, 2]);
+        #[test]
+        fn length_1_should_fail() {
+            // Here length is 1
+            // should fail because it is uneven and lower than 2
+            assert!(ArtCommand::from_buffer(&vec![
+                65, 114, 116, 45, 78, 101, 116, 0, 0, 80, 0, 14, 0, 0, 1, 0, 0, 1, 255,
+            ])
+            .is_err());
+        }
 
-    // #7.2: packets need to be at least 2 bytes
-    let command = ArtCommand::Output(Output {
-        data: vec![].into(),
-        ..Output::default()
-    });
-    assert!(command.into_buffer().is_err());
+        #[test]
+        fn length_3_should_fail() {
+            // Here length is 3
+            // should fail because it is uneven
+            assert!(ArtCommand::from_buffer(&vec![
+                65, 114, 116, 45, 78, 101, 116, 0, 0, 80, 0, 14, 0, 0, 1, 0, 0, 3, 255, 255, 255
+            ])
+            .is_err());
+        }
 
-    // #7.3: packets need to be at most 512 bytes
-    let command = ArtCommand::Output(Output {
-        data: vec![0xff; 513].into(),
-        ..Output::default()
-    });
-    assert!(command.into_buffer().is_err());
+        #[test]
+        fn length_513_should_fail() {
+            // Here length is 513
+            // should fail because it is uneven and above 512
+            // Here length is 513 (over 512 and uneven should fail)
+            assert!(ArtCommand::from_buffer(
+                &vec![
+                    vec![65, 114, 116, 45, 78, 101, 116, 0, 0, 80, 0, 14, 0, 0, 1, 0, 2, 1,],
+                    vec![255; 513],
+                ]
+                .concat()
+            )
+            .is_err());
+        }
+
+        #[test]
+        fn length_514_should_fail() {
+            // Here length is 514
+            // should fail because it is above 512
+            assert!(ArtCommand::from_buffer(
+                &vec![
+                    vec![65, 114, 116, 45, 78, 101, 116, 0, 0, 80, 0, 14, 0, 0, 1, 0, 2, 2,],
+                    vec![255; 514],
+                ]
+                .concat()
+            )
+            .is_err());
+        }
+
+        #[test]
+        fn data_shorter_than_length_should_fail() {
+            // Here length field claims 512 bytes of data, but only 510 bytes are delivered
+            assert!(ArtCommand::from_buffer(
+                &vec![
+                    vec![65, 114, 116, 45, 78, 101, 116, 0, 0, 80, 0, 14, 0, 0, 1, 0, 2, 0,],
+                    vec![255; 510],
+                ]
+                .concat()
+            )
+            .is_err());
+        }
+
+        #[test]
+        fn data_longer_than_length() {
+            // Parser must only parse as many bytes as length tells it to
+            // After that it must ignore all data bytes
+            let packet = &vec![
+                vec![
+                    65, 114, 116, 45, 78, 101, 116, 0, 0, 80, 0, 14, 0, 0, 1, 0, 0, 2,
+                ],
+                vec![255; 512],
+            ]
+            .concat();
+            // jump through hoops to compare the results to what we expect...
+            let command = ArtCommand::from_buffer(packet).unwrap();
+            if let ArtCommand::Output(output) = command {
+                assert_eq!(output.version, [0, 14]);
+                assert_eq!(output.sequence, 0);
+                assert_eq!(output.physical, 0);
+                assert_eq!(output.port_address, 1.into());
+                assert_eq!(output.length.parsed_length, Some(2));
+                assert_eq!(output.data.inner, vec![255, 255]);
+            }
+        }
+
+        #[test]
+        fn protver_below_14() {
+            // Because Art-Net is guaranteed to be backwards-compatible,
+            // we should be able to parse versions below 14,
+            // even tough these should never be seen in the wild
+            let packet = &vec![
+                65, 114, 116, 45, 78, 101, 116, 0, 0, 80, 0, 0, 0, 0, 1, 0, 0, 2, 255, 255,
+            ];
+            let command = ArtCommand::from_buffer(packet).unwrap();
+            if let ArtCommand::Output(output) = command {
+                assert_eq!(output.version, [0, 0]);
+                assert_eq!(output.sequence, 0);
+                assert_eq!(output.physical, 0);
+                assert_eq!(output.port_address, 1.into());
+                assert_eq!(output.length.parsed_length, Some(2));
+                assert_eq!(output.data.inner, vec![255, 255]);
+            }
+        }
+
+        #[test]
+        fn protver_above_14_should_fail() {
+            // Here protocol version is 15
+            // Any version above 14 should fail because we may not be able to parse it
+            assert!(ArtCommand::from_buffer(&vec![
+                65, 114, 116, 45, 78, 101, 116, 0, 0, 80, 0, 15, 0, 0, 1, 0, 0, 2, 255, 255,
+            ])
+            .is_err());
+        }
+
+        #[test]
+        fn invalid_port_address() {
+            // Here Port-Address is 32_768
+            // Any Port-Address over 32_767 should fail
+            assert!(ArtCommand::from_buffer(
+                &vec![
+                    vec![65, 114, 116, 45, 78, 101, 116, 0, 0, 80, 0, 14, 0, 0,],
+                    32_768u16.to_le_bytes().to_vec(),
+                    vec![0, 2, 255, 255,],
+                ]
+                .concat()
+            )
+            .is_err());
+        }
+    }
 }
