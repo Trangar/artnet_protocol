@@ -3,14 +3,14 @@ use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
 use std::io::{Cursor, Read};
 use std::net::Ipv4Addr;
 
-pub trait Convertable: Sized {
+pub trait Convertable<T>: Sized {
     fn from_cursor(cursor: &mut Cursor<&[u8]>) -> Result<Self>;
-    fn into_buffer(&self, buffer: &mut Vec<u8>) -> Result<()>;
+    fn into_buffer(&self, buffer: &mut Vec<u8>, context: &T) -> Result<()>;
     fn get_test_value() -> Self;
     fn is_equal(&self, other: &Self) -> bool;
 }
 
-impl Convertable for Ipv4Addr {
+impl<T> Convertable<T> for Ipv4Addr {
     fn from_cursor(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         Ok(Ipv4Addr::new(
             cursor.read_u8().map_err(Error::CursorEof)?,
@@ -20,7 +20,7 @@ impl Convertable for Ipv4Addr {
         ))
     }
 
-    fn into_buffer(&self, buffer: &mut Vec<u8>) -> Result<()> {
+    fn into_buffer(&self, buffer: &mut Vec<u8>, _: &T) -> Result<()> {
         buffer.extend_from_slice(&self.octets());
         Ok(())
     }
@@ -33,13 +33,13 @@ impl Convertable for Ipv4Addr {
     }
 }
 
-impl Convertable for Vec<u8> {
+impl<T> Convertable<T> for Vec<u8> {
     fn from_cursor(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         let remaining = cursor.get_ref();
         Ok(remaining[cursor.position() as usize..].to_vec())
     }
 
-    fn into_buffer(&self, buffer: &mut Vec<u8>) -> Result<()> {
+    fn into_buffer(&self, buffer: &mut Vec<u8>, _: &T) -> Result<()> {
         buffer.extend_from_slice(&self[..]);
         Ok(())
     }
@@ -51,12 +51,12 @@ impl Convertable for Vec<u8> {
     }
 }
 
-impl Convertable for u8 {
+impl<T> Convertable<T> for u8 {
     fn from_cursor(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         cursor.read_u8().map_err(Error::CursorEof)
     }
 
-    fn into_buffer(&self, buffer: &mut Vec<u8>) -> Result<()> {
+    fn into_buffer(&self, buffer: &mut Vec<u8>, _: &T) -> Result<()> {
         buffer.push(*self);
         Ok(())
     }
@@ -70,7 +70,7 @@ impl Convertable for u8 {
 
 macro_rules! convert_primitive {
     ([u8; $length:tt]) => {
-        impl Convertable for [u8; $length] {
+        impl<T> Convertable<T> for [u8; $length] {
             fn from_cursor(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
                 let mut result = [0; $length];
                 cursor
@@ -78,7 +78,7 @@ macro_rules! convert_primitive {
                     .map_err(Error::CursorEof)?;
                 Ok(result)
             }
-            fn into_buffer(&self, buffer: &mut Vec<u8>) -> Result<()> {
+            fn into_buffer(&self, buffer: &mut Vec<u8>, _: &T) -> Result<()> {
                 buffer.extend_from_slice(&self[..]);
                 Ok(())
             }
@@ -91,11 +91,11 @@ macro_rules! convert_primitive {
         }
     };
     ($ty:ty, $read_fn:tt, $write_fn:tt) => {
-        impl Convertable for $ty {
+        impl<T> Convertable<T> for $ty {
             fn from_cursor(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
                 cursor.$read_fn::<LittleEndian>().map_err(Error::CursorEof)
             }
-            fn into_buffer(&self, buffer: &mut Vec<u8>) -> Result<()> {
+            fn into_buffer(&self, buffer: &mut Vec<u8>, _: &T) -> Result<()> {
                 buffer
                     .$write_fn::<LittleEndian>(*self)
                     .map_err(Error::CursorEof)

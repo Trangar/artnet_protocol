@@ -23,12 +23,12 @@ bitflags! {
     }
 }
 
-impl Convertable for ArtTalkToMe {
+impl<T> Convertable<T> for ArtTalkToMe {
     fn from_cursor(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         let b = cursor.read_u8().map_err(Error::CursorEof)?;
         Ok(ArtTalkToMe::from_bits_truncate(b))
     }
-    fn into_buffer(&self, buffer: &mut Vec<u8>) -> Result<()> {
+    fn into_buffer(&self, buffer: &mut Vec<u8>, _: &T) -> Result<()> {
         buffer.push(self.bits());
         Ok(())
     }

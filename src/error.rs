@@ -1,3 +1,5 @@
+use std::ops::Range;
+
 /// The result that this crate uses
 pub type Result<T> = std::result::Result<T, Error>;
 
@@ -13,8 +15,23 @@ pub enum Error {
     /// Could not deserialize an artnet command
     DeserializeError(&'static str, Box<Error>),
 
-    /// The given message was not long enough
-    MessageTooShort(Vec<u8>),
+    /// The given message was too short
+    MessageTooShort {
+        /// The message that was being send or received
+        message: Vec<u8>,
+
+        /// The minimal length that is supported
+        min_len: usize,
+    },
+
+    /// The given message was too long or too short
+    MessageSizeInvalid {
+        /// The message that was being send or received
+        message: Vec<u8>,
+
+        /// The size that the artnet protocol expects
+        allowed_size: Range<usize>,
+    },
 
     /// The artnet header is invalid
     InvalidArtnetHeader(Vec<u8>),
@@ -24,6 +41,9 @@ pub enum Error {
 
     /// Unknown opcode ID
     UnknownOpcode(u16),
+
+    /// The Art-Net PortAddress was not from 0 to 32_767
+    InvalidPortAddress(i32),
 }
 
 impl std::fmt::Display for Error {
@@ -32,12 +52,32 @@ impl std::fmt::Display for Error {
             Error::CursorEof(inner) => write!(fmt, "Cursor EOF: {}", inner),
             Error::SerializeError(message, inner) => write!(fmt, "{}: {}", message, inner),
             Error::DeserializeError(message, inner) => write!(fmt, "{}: {}", message, inner),
-            Error::MessageTooShort(_) => write!(fmt, "Message too short"),
+            Error::MessageTooShort { message, min_len } => write!(
+                fmt,
+                "Message too short, it was {} but artnet expects at least {}",
+                message.len(),
+                min_len
+            ),
+            Error::MessageSizeInvalid {
+                message,
+                allowed_size,
+            } => write!(
+                fmt,
+                "Message size invalid, it was {} but artnet expects between {} and {}",
+                message.len(),
+                allowed_size.start,
+                allowed_size.end
+            ),
             Error::InvalidArtnetHeader(_) => write!(fmt, "Invalid artnet header"),
             Error::OpcodeError(opcode, inner) => {
                 write!(fmt, "Could not parse opcode {:?}: {}", opcode, inner)
             }
             Error::UnknownOpcode(opcode) => write!(fmt, "Unknown opcode 0x{:X}", opcode),
+            Error::InvalidPortAddress(wrong_number) => write!(
+                fmt,
+                "Art-Net PortAddress must be from 0 to 32_767. Got {:?}",
+                wrong_number
+            ),
         }
     }
 }
