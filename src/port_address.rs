@@ -42,7 +42,7 @@ impl TryFrom<u16> for PortAddress {
 impl TryFrom<i32> for PortAddress {
     type Error = Error;
     fn try_from(value: i32) -> Result<Self> {
-        if value <= 32_767 && value >= 0 {
+        if (0..=32767).contains(&value) {
             Ok(PortAddress(value as u16))
         } else {
             Err(Error::InvalidPortAddress(value))
