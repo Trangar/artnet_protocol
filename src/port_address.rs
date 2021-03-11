@@ -58,7 +58,7 @@ impl<T> Convertable<T> for PortAddress {
         PortAddress::try_from(number)
     }
 
-    fn into_buffer(&self, buffer: &mut Vec<u8>, _context: &T) -> Result<()> {
+    fn write_to_buffer(&self, buffer: &mut Vec<u8>, _context: &T) -> Result<()> {
         buffer
             .write_u16::<LittleEndian>(self.0)
             .map_err(Error::CursorEof)

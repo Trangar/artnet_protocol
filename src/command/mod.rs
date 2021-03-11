@@ -11,7 +11,7 @@ pub use self::poll_reply::PollReply;
 
 /// The ArtCommand, to be used for ArtNet.
 ///
-/// This struct implements an `into_buffer` and `from_buffer` function, to be used with UDP connections.
+/// This struct implements an `write_to_buffer` and `from_buffer` function, to be used with UDP connections.
 
 #[derive(Debug)]
 pub enum ArtCommand {
@@ -131,7 +131,7 @@ pub const ARTNET_PROTOCOL_VERSION: [u8; 2] = [0, 14];
 
 impl ArtCommand {
     /// Convert an ArtCommand in a byte buffer, which can be send to an UDP socket.
-    pub fn into_buffer(self) -> Result<Vec<u8>> {
+    pub fn write_to_buffer(self) -> Result<Vec<u8>> {
         let mut result = Vec::new();
         let (opcode, data) = self.get_opcode()?;
 

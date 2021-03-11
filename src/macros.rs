@@ -24,7 +24,7 @@ macro_rules! data_structure {
 
                 let mut result = Vec::new();
                 $(
-                    self.$field.into_buffer(&mut result, &self)
+                    self.$field.write_to_buffer(&mut result, &self)
                         .map_err(|e| Error::SerializeError(concat!("Could not serialize field ", stringify!($name), "::", stringify!($field)), Box::new(e)))?;
                 )*
                 Ok(result)

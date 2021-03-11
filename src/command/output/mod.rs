@@ -86,7 +86,7 @@ impl<T> Convertable<T> for PaddedData {
         Ok(Self { inner })
     }
 
-    fn into_buffer(&self, buffer: &mut Vec<u8>, _: &T) -> Result<()> {
+    fn write_to_buffer(&self, buffer: &mut Vec<u8>, _: &T) -> Result<()> {
         let len = self.len();
         if len == 0 {
             // packets must be between 2 and 512 bytes, 1 gets padded up, but 0 is invalid
@@ -153,7 +153,7 @@ impl Convertable<Output> for BigEndianLength<Output> {
             _pd: std::marker::PhantomData,
         })
     }
-    fn into_buffer(&self, buffer: &mut Vec<u8>, context: &Output) -> crate::Result<()> {
+    fn write_to_buffer(&self, buffer: &mut Vec<u8>, context: &Output) -> crate::Result<()> {
         let len = context.data.len_rounded_up() as u16;
         buffer.write_u16::<BigEndian>(len).map_err(Error::CursorEof)
     }
