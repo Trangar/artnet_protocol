@@ -28,7 +28,7 @@ impl<T> Convertable<T> for ArtTalkToMe {
         let b = cursor.read_u8().map_err(Error::CursorEof)?;
         Ok(ArtTalkToMe::from_bits_truncate(b))
     }
-    fn into_buffer(&self, buffer: &mut Vec<u8>, _: &T) -> Result<()> {
+    fn write_to_buffer(&self, buffer: &mut Vec<u8>, _: &T) -> Result<()> {
         buffer.push(self.bits());
         Ok(())
     }

@@ -9,7 +9,7 @@ mod serialization {
             data: vec![255].into(), // The data we're sending to the node
             ..Output::default()
         });
-        let bytes = command.into_buffer().unwrap();
+        let bytes = command.write_to_buffer().unwrap();
         let comparison = vec![
             65, 114, 116, 45, 78, 101, 116, 0, 0, 80, 0, 14, 0, 0, 1, 0, 0, 2, 255, 0,
         ]; //is padded with zero to even length of two
@@ -21,7 +21,7 @@ mod serialization {
             data: vec![128; 512].into(), // The data we're sending to the node
             ..Output::default()
         });
-        let bytes = command.into_buffer().unwrap();
+        let bytes = command.write_to_buffer().unwrap();
         let comparison = vec![
             vec![
                 65, 114, 116, 45, 78, 101, 116, 0, 0, 80, 0, 14, 0, 0, 1, 0, 2, 0,
@@ -37,7 +37,7 @@ mod serialization {
             data: vec![0xff; 512].into(),
             ..Output::default()
         });
-        let buffer = command.into_buffer().unwrap();
+        let buffer = command.write_to_buffer().unwrap();
         // #6: length needs to be encoded in big endian
         assert_eq!(&buffer[0x10..=0x11], &[2, 0]);
         // #7.1: packets need to be an even number
@@ -56,7 +56,7 @@ mod serialization {
         assert_eq!(get_data(&command).len(), 1);
         // But the padded length is 2
         assert_eq!(get_data(&command).len_rounded_up(), 2);
-        let buffer = command.into_buffer().unwrap();
+        let buffer = command.write_to_buffer().unwrap();
         // The data written is 2 bytes
         assert_eq!(&buffer[0x10..=0x11], &[0, 2]);
         // #7.2: packets need to be at least 2 bytes
@@ -64,13 +64,13 @@ mod serialization {
             data: vec![].into(),
             ..Output::default()
         });
-        assert!(command.into_buffer().is_err());
+        assert!(command.write_to_buffer().is_err());
         // #7.3: packets need to be at most 512 bytes
         let command = ArtCommand::Output(Output {
             data: vec![0xff; 513].into(),
             ..Output::default()
         });
-        assert!(command.into_buffer().is_err());
+        assert!(command.write_to_buffer().is_err());
     }
 }
 

@@ -5,7 +5,7 @@ use std::net::Ipv4Addr;
 
 pub trait Convertable<T>: Sized {
     fn from_cursor(cursor: &mut Cursor<&[u8]>) -> Result<Self>;
-    fn into_buffer(&self, buffer: &mut Vec<u8>, context: &T) -> Result<()>;
+    fn write_to_buffer(&self, buffer: &mut Vec<u8>, context: &T) -> Result<()>;
     fn get_test_value() -> Self;
     fn is_equal(&self, other: &Self) -> bool;
 }
@@ -20,7 +20,7 @@ impl<T> Convertable<T> for Ipv4Addr {
         ))
     }
 
-    fn into_buffer(&self, buffer: &mut Vec<u8>, _: &T) -> Result<()> {
+    fn write_to_buffer(&self, buffer: &mut Vec<u8>, _: &T) -> Result<()> {
         buffer.extend_from_slice(&self.octets());
         Ok(())
     }
@@ -39,7 +39,7 @@ impl<T> Convertable<T> for Vec<u8> {
         Ok(remaining[cursor.position() as usize..].to_vec())
     }
 
-    fn into_buffer(&self, buffer: &mut Vec<u8>, _: &T) -> Result<()> {
+    fn write_to_buffer(&self, buffer: &mut Vec<u8>, _: &T) -> Result<()> {
         buffer.extend_from_slice(&self[..]);
         Ok(())
     }
@@ -56,7 +56,7 @@ impl<T> Convertable<T> for u8 {
         cursor.read_u8().map_err(Error::CursorEof)
     }
 
-    fn into_buffer(&self, buffer: &mut Vec<u8>, _: &T) -> Result<()> {
+    fn write_to_buffer(&self, buffer: &mut Vec<u8>, _: &T) -> Result<()> {
         buffer.push(*self);
         Ok(())
     }
@@ -78,7 +78,7 @@ macro_rules! convert_primitive {
                     .map_err(Error::CursorEof)?;
                 Ok(result)
             }
-            fn into_buffer(&self, buffer: &mut Vec<u8>, _: &T) -> Result<()> {
+            fn write_to_buffer(&self, buffer: &mut Vec<u8>, _: &T) -> Result<()> {
                 buffer.extend_from_slice(&self[..]);
                 Ok(())
             }
@@ -95,7 +95,7 @@ macro_rules! convert_primitive {
             fn from_cursor(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
                 cursor.$read_fn::<LittleEndian>().map_err(Error::CursorEof)
             }
-            fn into_buffer(&self, buffer: &mut Vec<u8>, _: &T) -> Result<()> {
+            fn write_to_buffer(&self, buffer: &mut Vec<u8>, _: &T) -> Result<()> {
                 buffer
                     .$write_fn::<LittleEndian>(*self)
                     .map_err(Error::CursorEof)

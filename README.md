@@ -9,7 +9,7 @@ use std::net::{UdpSocket, ToSocketAddrs};
 let socket = UdpSocket::bind(("0.0.0.0", 6454)).unwrap();
 let broadcast_addr = ("255.255.255.255", 6454).to_socket_addrs().unwrap().next().unwrap();
 socket.set_broadcast(true).unwrap();
-let buff = ArtCommand::Poll(Poll::default()).into_buffer().unwrap();
+let buff = ArtCommand::Poll(Poll::default()).write_to_buffer().unwrap();
 socket.send_to(&buff, &broadcast_addr).unwrap();
 
 loop {
@@ -29,7 +29,7 @@ loop {
                 data: vec![1, 2, 3, 4, 5], // The data we're sending to the node
                 ..Output::default()
             });
-            let bytes = command.into_buffer().unwrap();
+            let bytes = command.write_to_buffer().unwrap();
             socket.send_to(&bytes, &addr).unwrap();
         },
         _ => {}
