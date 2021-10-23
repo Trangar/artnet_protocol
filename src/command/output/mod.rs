@@ -55,15 +55,20 @@ pub struct PaddedData {
 }
 
 impl PaddedData {
-    fn len(&self) -> usize {
+    pub fn len(&self) -> usize {
         self.inner.len()
     }
+
     fn len_rounded_up(&self) -> usize {
         let mut len = self.inner.len();
         if len % 2 != 0 {
             len += 1;
         }
         len
+    }
+
+    pub fn get(&self) -> &[u8] {
+        &self.inner
     }
 }
 
