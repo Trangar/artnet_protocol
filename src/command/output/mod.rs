@@ -54,7 +54,7 @@ pub struct PaddedData {
     inner: Vec<u8>,
 }
 
-impl PaddedData {
+impl PaddedData {    
     fn len(&self) -> usize {
         self.inner.len()
     }
@@ -64,6 +64,18 @@ impl PaddedData {
             len += 1;
         }
         len
+    }
+}
+
+impl AsRef<Vec<u8>> for PaddedData {
+    fn as_ref(&self) -> &Vec<u8> {
+        self.inner.as_ref()
+    }
+}
+
+impl AsMut<Vec<u8>> for PaddedData {
+    fn as_mut(&mut self) -> &mut Vec<u8> {
+        self.inner.as_mut()
     }
 }
 
