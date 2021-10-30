@@ -54,7 +54,7 @@ pub struct PaddedData {
     inner: Vec<u8>,
 }
 
-impl PaddedData {    
+impl PaddedData {
     fn len(&self) -> usize {
         self.inner.len()
     }
