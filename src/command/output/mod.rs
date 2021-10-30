@@ -67,6 +67,18 @@ impl PaddedData {
     }
 }
 
+impl AsRef<Vec<u8>> for PaddedData {
+    fn as_ref(&self) -> &Vec<u8> {
+        self.inner.as_ref()
+    }
+}
+
+impl AsMut<Vec<u8>> for PaddedData {
+    fn as_mut(&mut self) -> &mut Vec<u8> {
+        self.inner.as_mut()
+    }
+}
+
 impl From<Vec<u8>> for PaddedData {
     fn from(inner: Vec<u8>) -> Self {
         Self { inner }
