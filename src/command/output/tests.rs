@@ -47,7 +47,7 @@ mod serialization {
             } else {
                 unreachable!()
             }
-        };
+        }
         let command = ArtCommand::Output(Output {
             data: vec![0xff].into(),
             ..Output::default()
