@@ -5,7 +5,7 @@ mod poll_reply;
 use crate::{Error, Result};
 use byteorder::{ByteOrder, LittleEndian, WriteBytesExt};
 
-pub use self::output::Output;
+pub use self::output::{Output, PaddedData};
 pub use self::poll::Poll;
 pub use self::poll_reply::PollReply;
 

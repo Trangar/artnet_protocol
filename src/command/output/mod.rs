@@ -50,6 +50,7 @@ impl Default for Output {
 }
 
 #[derive(Default)]
+#[doc = "Data in an ArtDmx data packet."]
 pub struct PaddedData {
     inner: Vec<u8>,
 }
