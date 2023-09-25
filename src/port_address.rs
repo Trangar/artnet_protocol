@@ -1,7 +1,9 @@
-use crate::{convert::Convertable, Error, Result};
-use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
 use std::convert::TryFrom;
 use std::io::Cursor;
+
+use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
+
+use crate::{convert::Convertable, Error, Result};
 
 /// A `PortAddress` is an unsigned integer from 0 to 32_767 (15-bit).
 ///
@@ -50,6 +52,12 @@ impl TryFrom<i32> for PortAddress {
     }
 }
 
+impl From<PortAddress> for u16 {
+    fn from(value: PortAddress) -> Self {
+        value.0
+    }
+}
+
 impl<T> Convertable<T> for PortAddress {
     fn from_cursor(cursor: &mut Cursor<&[u8]>) -> Result<Self> {
         let number = cursor
@@ -76,6 +84,7 @@ impl<T> Convertable<T> for PortAddress {
 #[cfg(test)]
 mod tests {
     use super::*;
+
     #[test]
     fn port_address_bound_check() {
         use std::convert::TryInto;
