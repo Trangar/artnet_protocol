@@ -4,6 +4,7 @@ use crate::{Error, Result};
 use std::io::Cursor;
 
 bitflags! {
+    #[derive(Debug, PartialEq)]
     /// The TalkToMe flag, as to be used in the `Poll` and `PollReply` message
     pub struct ArtTalkToMe: u8 {
         /// Enable VLC transmission if set, disabled otherwise
