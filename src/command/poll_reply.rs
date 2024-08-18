@@ -102,3 +102,38 @@ impl fmt::Debug for PollReply {
             .finish()
     }
 }
+
+impl Default for PollReply {
+    fn default() -> Self {
+        // Per Art-Net spec, unused fields are zero
+        PollReply {
+            address: Ipv4Addr::from_bits(0),
+            port: 6454,
+            version: [0; 2],
+            port_address: [0; 2],
+            oem: [0; 2],
+            ubea_version: 0,
+            status_1: 0,
+            esta_code: 0,
+            short_name: [0; 18],
+            long_name: [0; 64],
+            node_report: [0; 64],
+            num_ports: [0; 2],
+            port_types: [0; 4],
+            good_input: [0; 4],
+            good_output: [0; 4],
+            swin: [0; 4],
+            swout: [0; 4],
+            sw_video: 0,
+            sw_macro: 0,
+            sw_remote: 0,
+            spare: [0; 3],
+            style: 0,
+            mac: [0; 6],
+            bind_ip: [0; 4],
+            bind_index: 0,
+            status_2: 0,
+            filler: [0; 26],
+        }
+    }
+}
