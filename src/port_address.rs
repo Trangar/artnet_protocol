@@ -72,10 +72,12 @@ impl<T> Convertable<T> for PortAddress {
             .map_err(Error::CursorEof)
     }
 
+    #[cfg(test)]
     fn get_test_value() -> Self {
         PortAddress::from(1)
     }
 
+    #[cfg(test)]
     fn is_equal(&self, other: &Self) -> bool {
         self == other
     }

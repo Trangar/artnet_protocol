@@ -6,7 +6,9 @@ use std::net::Ipv4Addr;
 pub trait Convertable<T>: Sized {
     fn from_cursor(cursor: &mut Cursor<&[u8]>) -> Result<Self>;
     fn write_to_buffer(&self, buffer: &mut Vec<u8>, context: &T) -> Result<()>;
+    #[cfg(test)]
     fn get_test_value() -> Self;
+    #[cfg(test)]
     fn is_equal(&self, other: &Self) -> bool;
 }
 
@@ -25,9 +27,11 @@ impl<T> Convertable<T> for Ipv4Addr {
         Ok(())
     }
 
+    #[cfg(test)]
     fn get_test_value() -> Self {
         Ipv4Addr::new(1, 2, 3, 4)
     }
+    #[cfg(test)]
     fn is_equal(&self, other: &Self) -> bool {
         self == other
     }
@@ -43,9 +47,11 @@ impl<T> Convertable<T> for Vec<u8> {
         buffer.extend_from_slice(&self[..]);
         Ok(())
     }
+    #[cfg(test)]
     fn get_test_value() -> Self {
         vec![1, 2, 3, 4]
     }
+    #[cfg(test)]
     fn is_equal(&self, other: &Self) -> bool {
         self == other
     }
@@ -60,9 +66,11 @@ impl<T> Convertable<T> for u8 {
         buffer.push(*self);
         Ok(())
     }
+    #[cfg(test)]
     fn get_test_value() -> Self {
         1
     }
+    #[cfg(test)]
     fn is_equal(&self, other: &Self) -> bool {
         self == other
     }
@@ -82,9 +90,11 @@ macro_rules! convert_primitive {
                 buffer.extend_from_slice(&self[..]);
                 Ok(())
             }
+            #[cfg(test)]
             fn get_test_value() -> Self {
                 [0; $length]
             }
+            #[cfg(test)]
             fn is_equal(&self, other: &Self) -> bool {
                 &self[..] == &other[..]
             }
@@ -100,9 +110,11 @@ macro_rules! convert_primitive {
                     .$write_fn::<LittleEndian>(*self)
                     .map_err(Error::CursorEof)
             }
+            #[cfg(test)]
             fn get_test_value() -> Self {
                 0
             }
+            #[cfg(test)]
             fn is_equal(&self, other: &Self) -> bool {
                 self == other
             }

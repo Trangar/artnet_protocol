@@ -33,9 +33,11 @@ impl<T> Convertable<T> for ArtTalkToMe {
         buffer.push(self.bits());
         Ok(())
     }
+    #[cfg(test)]
     fn get_test_value() -> Self {
         ArtTalkToMe::NONE
     }
+    #[cfg(test)]
     fn is_equal(&self, other: &Self) -> bool {
         self == other
     }

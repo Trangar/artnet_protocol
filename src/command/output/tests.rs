@@ -22,7 +22,7 @@ mod serialization {
             ..Output::default()
         });
         let bytes = command.write_to_buffer().unwrap();
-        let comparison = vec![
+        let comparison = [
             vec![
                 65, 114, 116, 45, 78, 101, 116, 0, 0, 80, 0, 14, 0, 0, 1, 0, 2, 0,
             ],
@@ -82,7 +82,7 @@ mod parsing {
         // Because Art-Net is guaranteed to be backwards-compatible,
         // we should be able to parse versions below 14,
         // even tough these should never be seen in the wild
-        let packet = &vec![
+        let packet = &[
             65, 114, 116, 45, 78, 101, 116, 0, 0, 80, 0, 0, 0, 0, 1, 0, 0, 2, 255, 255,
         ];
         let command = ArtCommand::from_buffer(packet).unwrap();
@@ -101,10 +101,10 @@ mod parsing {
         // Here Port-Address is 32_768
         // Any Port-Address over 32_767 should fail
         assert!(ArtCommand::from_buffer(
-            &vec![
+            &[
                 vec![65, 114, 116, 45, 78, 101, 116, 0, 0, 80, 0, 14, 0, 0,],
                 32_768u16.to_le_bytes().to_vec(),
-                vec![0, 2, 255, 255,],
+                vec![0, 2, 255, 255,]
             ]
             .concat()
         )

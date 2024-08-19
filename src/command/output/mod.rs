@@ -124,11 +124,14 @@ impl<T> Convertable<T> for PaddedData {
         }
         Ok(())
     }
+
+    #[cfg(test)]
     fn get_test_value() -> Self {
         PaddedData {
             inner: vec![1, 2, 3, 4],
         }
     }
+    #[cfg(test)]
     fn is_equal(&self, other: &Self) -> bool {
         self.inner == other.inner
     }
@@ -170,9 +173,11 @@ impl Convertable<Output> for BigEndianLength<Output> {
         let len = context.data.len_rounded_up() as u16;
         buffer.write_u16::<BigEndian>(len).map_err(Error::CursorEof)
     }
+    #[cfg(test)]
     fn get_test_value() -> Self {
         Default::default()
     }
+    #[cfg(test)]
     fn is_equal(&self, other: &Self) -> bool {
         if (self.parsed_length.is_none() && other.parsed_length.is_some())
             || (self.parsed_length.is_some() && other.parsed_length.is_none())
