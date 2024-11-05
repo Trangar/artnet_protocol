@@ -1,13 +1,3 @@
-# artnet_protocol
-
-Contains the [ArtCommand](struct.ArtCommand.html) enum which holds the entire ArtNet protocol v4, as per [https://artisticlicence.com/WebSiteMaster/User%20Guides/art-net.pdf](https://artisticlicence.com/WebSiteMaster/User%20Guides/art-net.pdf)
-
-You can run the example program using
-
-cargo build --example simple_sender
-cargo run --example simple_sender
-
-```rust
 use artnet_protocol::*;
 use std::net::{ToSocketAddrs, UdpSocket};
 
@@ -45,6 +35,3 @@ fn main() {
         }
     }
 }
-```
-
-License: MIT
