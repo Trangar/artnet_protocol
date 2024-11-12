@@ -4,9 +4,12 @@ Contains the [ArtCommand](struct.ArtCommand.html) enum which holds the entire Ar
 
 You can run the example program using
 
+```shell
 cargo build --example simple_sender
 cargo run --example simple_sender
+```
 
+Here is an example of sending dmx. You can find more examples in the  [examples directory](https://github.com/Trangar/artnet_protocol/tree/master/examples)
 ```rust
 use artnet_protocol::*;
 use std::net::{ToSocketAddrs, UdpSocket};
