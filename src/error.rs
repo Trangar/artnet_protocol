@@ -44,6 +44,9 @@ pub enum Error {
 
     /// The Art-Net PortAddress was not from 0 to 32_767
     InvalidPortAddress(i32),
+
+    /// There was a problem matching to a known timecode frame type
+    InvalidTimecodeFrameType(u8),
 }
 
 impl std::fmt::Display for Error {
@@ -77,6 +80,11 @@ impl std::fmt::Display for Error {
                 fmt,
                 "Art-Net PortAddress must be from 0 to 32_767. Got {:?}",
                 wrong_number
+            ),
+            Error::InvalidTimecodeFrameType(frame_type_number) => write!(
+                fmt,
+                "Timecode Frame Type should be 0 thru 3, received {}",
+                frame_type_number
             ),
         }
     }
