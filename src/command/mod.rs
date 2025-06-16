@@ -1,6 +1,7 @@
 mod output;
 mod poll;
 mod poll_reply;
+mod timecode;
 
 use crate::{Error, Result};
 use byteorder::{ByteOrder, LittleEndian, WriteBytesExt};
@@ -8,6 +9,7 @@ use byteorder::{ByteOrder, LittleEndian, WriteBytesExt};
 pub use self::output::{Output, PaddedData};
 pub use self::poll::Poll;
 pub use self::poll_reply::PollReply;
+pub use self::timecode::Timecode;
 
 /// The ArtCommand, to be used for ArtNet.
 ///
@@ -105,8 +107,8 @@ pub enum ArtCommand {
     /// [Not implemented] This is an ArtMediaControlReply packet. It is Unicast by a Media Server and acted upon by a Controller
     OpMediaControlReply,
 
-    /// [Not implemented] This is an ArtTimeCode packet. It is used to transport time code over the network
-    OpTimeCode,
+    /// This is an ArtTimeCode packet. It is used to transport time code over the network
+    OpTimeCode(Timecode),
 
     /// [Not implemented] Used to synchronise real time date and clock
     OpTimeSync,
@@ -208,7 +210,9 @@ impl ArtCommand {
             0x9100 => ArtCommand::OpMediaPatch,
             0x9200 => ArtCommand::OpMediaControl,
             0x9300 => ArtCommand::OpMediaControlReply,
-            0x9700 => ArtCommand::OpTimeCode,
+            0x9700 => ArtCommand::OpTimeCode(
+                Timecode::from(data).map_err(|e| Error::OpcodeError("Timecode", Box::new(e)))?,
+            ),
             0x9800 => ArtCommand::OpTimeSync,
             0x9900 => ArtCommand::OpTrigger,
             0x9A00 => ArtCommand::OpDirectory,
@@ -249,7 +253,7 @@ impl ArtCommand {
             ArtCommand::OpMediaPatch => (0x9100, Vec::new()),
             ArtCommand::OpMediaControl => (0x9200, Vec::new()),
             ArtCommand::OpMediaControlReply => (0x9300, Vec::new()),
-            ArtCommand::OpTimeCode => (0x9700, Vec::new()),
+            ArtCommand::OpTimeCode(timecode) => (0x9700, timecode.to_bytes()?),
             ArtCommand::OpTimeSync => (0x9800, Vec::new()),
             ArtCommand::OpTrigger => (0x9900, Vec::new()),
             ArtCommand::OpDirectory => (0x9A00, Vec::new()),
