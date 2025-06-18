@@ -9,7 +9,7 @@ use byteorder::{ByteOrder, LittleEndian, WriteBytesExt};
 pub use self::output::{Output, PaddedData};
 pub use self::poll::Poll;
 pub use self::poll_reply::PollReply;
-pub use self::timecode::Timecode;
+pub use self::timecode::{FrameType, Timecode};
 
 /// The ArtCommand, to be used for ArtNet.
 ///
