@@ -34,6 +34,7 @@ data_structure! {
     }
 }
 
+/// The framerate being used for a particular [Timecode] stream.
 #[repr(u8)]
 #[derive(Debug, PartialEq, Copy, Clone)]
 pub enum FrameType {
