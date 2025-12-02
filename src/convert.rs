@@ -130,3 +130,4 @@ convert_primitive!([u8; 6]);
 convert_primitive!([u8; 18]);
 convert_primitive!([u8; 26]);
 convert_primitive!([u8; 64]);
+convert_primitive!([u8; 512]);
