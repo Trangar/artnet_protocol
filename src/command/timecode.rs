@@ -11,12 +11,6 @@ data_structure! {
         #[doc = "Determines which version the server has. Will be ARTNET_PROTOCOL_VERSION by default"]
         pub version: [u8; 2],
 
-        // #[doc = "Determines how the nodes should respond"]
-        // pub talk_to_me: ArtTalkToMe,
-
-        // #[doc = "Determines the priority of the diagnostics that the nodes should send"]
-        // pub diagnostics_priority: u8,
-
         #[doc = "Ignore by receiver, set to zero by sender"]
         pub filler1: u8,
         #[doc = "Used to identify different streams of time code. Value of 0x00 is the master"]
