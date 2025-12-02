@@ -1,6 +1,7 @@
 mod output;
 mod poll;
 mod poll_reply;
+mod sync;
 mod timecode;
 mod trigger;
 
@@ -10,6 +11,7 @@ use byteorder::{ByteOrder, LittleEndian, WriteBytesExt};
 pub use self::output::{Output, PaddedData};
 pub use self::poll::Poll;
 pub use self::poll_reply::PollReply;
+pub use self::sync::Sync;
 pub use self::timecode::{FrameType, Timecode};
 pub use self::trigger::{Trigger, TriggerKey};
 
@@ -37,8 +39,8 @@ pub enum ArtCommand {
     /// [Not implemented] This is an ArtNzs data packet. It contains non-zero start code (except RDM) DMX512 information for a single Universe
     Nzs,
 
-    /// [Not implemented] This is an ArtSync data packet. It is used to force synchronous transfer of ArtDmx packets to a node's output
-    Sync,
+    /// This is an ArtSync data packet. It is used to force synchronous transfer of ArtDmx packets to a node's output
+    Sync(Sync),
 
     /// [Not implemented] This is an ArtAddress packet. It contains remote programming information for a Node.
     Address,
@@ -188,7 +190,9 @@ impl ArtCommand {
                 Output::from(data).map_err(|e| Error::OpcodeError("Output", Box::new(e)))?,
             ),
             0x5100 => ArtCommand::Nzs,
-            0x5200 => ArtCommand::Sync,
+            0x5200 => ArtCommand::Sync(
+                Sync::from(data).map_err(|e| Error::OpcodeError("Sync", Box::new(e)))?,
+            ),
             0x6000 => ArtCommand::Address,
             0x7000 => ArtCommand::Input,
             0x8000 => ArtCommand::TodRequest,
@@ -233,7 +237,7 @@ impl ArtCommand {
             ArtCommand::Command => (0x2400, Vec::new()),
             ArtCommand::Output(output) => (0x5000, output.to_bytes()?),
             ArtCommand::Nzs => (0x5100, Vec::new()),
-            ArtCommand::Sync => (0x5200, Vec::new()),
+            ArtCommand::Sync(sync) => (0x5200, sync.to_bytes()?),
             ArtCommand::Address => (0x6000, Vec::new()),
             ArtCommand::Input => (0x7000, Vec::new()),
             ArtCommand::TodRequest => (0x8000, Vec::new()),
