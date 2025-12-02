@@ -1,14 +1,20 @@
 use artnet_protocol::*;
-use std::net::{ToSocketAddrs, UdpSocket};
+use socket2::{Domain, Protocol, Socket, Type};
+use std::net::{SocketAddr, UdpSocket};
 
 fn main() {
-    let socket = UdpSocket::bind(("0.0.0.0", 6454)).unwrap();
-    let broadcast_addr = ("255.255.255.255", 6454)
-        .to_socket_addrs()
-        .unwrap()
-        .next()
-        .unwrap();
-    socket.set_broadcast(true).unwrap();
+    let socket = Socket::new(Domain::IPV4, Type::DGRAM, Some(Protocol::UDP))
+        .expect("failed to create UDP socket");
+    socket.set_broadcast(true).expect("failed to set broadcast");
+    socket
+        .set_reuse_address(true)
+        .expect("failed to enable address reuse");
+    let addr = SocketAddr::from(([0, 0, 0, 0], 6454));
+    socket.bind(&addr.into()).expect("failed to bind socket");
+
+    let socket = UdpSocket::from(socket);
+    let broadcast_addr = SocketAddr::from(([255, 255, 255, 255], 6454));
+
     let buff = ArtCommand::Poll(Poll::default()).write_to_buffer().unwrap();
     socket.send_to(&buff, &broadcast_addr).unwrap();
 
