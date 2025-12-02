@@ -19,10 +19,10 @@ fn main() {
 
         println!("Received {:?}", command);
         match command {
-            ArtCommand::Poll(poll) => {
+            ArtCommand::Poll(_poll) => {
                 // This will most likely be our own poll request, as this is broadcast to all devices on the network
             }
-            ArtCommand::PollReply(reply) => {
+            ArtCommand::PollReply(_reply) => {
                 // This is an ArtNet node on the network. We can send commands to it like this:
                 let command = ArtCommand::Output(Output {
                     data: vec![1, 2, 3, 4, 5].into(), // The data we're sending to the node

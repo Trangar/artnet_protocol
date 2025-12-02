@@ -61,7 +61,7 @@ impl PaddedData {
     }
     fn len_rounded_up(&self) -> usize {
         let mut len = self.inner.len();
-        if len % 2 != 0 {
+        if !len.is_multiple_of(2) {
             len += 1;
         }
         len
@@ -118,7 +118,7 @@ impl<T> Convertable<T> for PaddedData {
         }
 
         buffer.extend_from_slice(&self.inner[..]);
-        if len % 2 != 0 {
+        if !len.is_multiple_of(2) {
             // the data of an output needs to be an even size, so we add an additional 0-byte
             buffer.push(0);
         }
