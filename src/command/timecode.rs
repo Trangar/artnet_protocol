@@ -2,7 +2,7 @@ use std::convert::TryFrom;
 
 use byteorder::{ReadBytesExt, WriteBytesExt};
 
-use crate::{convert::Convertable, Error, Result};
+use crate::{convert::Convertable, Error, Result, ARTNET_PROTOCOL_VERSION};
 
 data_structure! {
     #[derive(Debug)]
@@ -25,6 +25,21 @@ data_structure! {
         pub hours: u8,
         #[doc = "FrameType "]
         pub frame_type: FrameType,
+    }
+}
+
+impl Default for Timecode {
+    fn default() -> Self {
+        Self {
+            version: ARTNET_PROTOCOL_VERSION,
+            filler1: 0,
+            stream_id: 0x00,
+            frames: 0,
+            seconds: 0,
+            minutes: 0,
+            hours: 0,
+            frame_type: FrameType::Film,
+        }
     }
 }
 
