@@ -2,7 +2,7 @@ use std::convert::TryFrom;
 
 use byteorder::{ReadBytesExt, WriteBytesExt};
 
-use crate::{convert::Convertable, Error, Result};
+use crate::{convert::Convertable, Error, Result, ARTNET_PROTOCOL_VERSION};
 
 data_structure! {
     #[derive(Debug)]
@@ -10,12 +10,6 @@ data_structure! {
     pub struct Timecode {
         #[doc = "Determines which version the server has. Will be ARTNET_PROTOCOL_VERSION by default"]
         pub version: [u8; 2],
-
-        // #[doc = "Determines how the nodes should respond"]
-        // pub talk_to_me: ArtTalkToMe,
-
-        // #[doc = "Determines the priority of the diagnostics that the nodes should send"]
-        // pub diagnostics_priority: u8,
 
         #[doc = "Ignore by receiver, set to zero by sender"]
         pub filler1: u8,
@@ -31,6 +25,21 @@ data_structure! {
         pub hours: u8,
         #[doc = "FrameType "]
         pub frame_type: FrameType,
+    }
+}
+
+impl Default for Timecode {
+    fn default() -> Self {
+        Self {
+            version: ARTNET_PROTOCOL_VERSION,
+            filler1: 0,
+            stream_id: 0x00,
+            frames: 0,
+            seconds: 0,
+            minutes: 0,
+            hours: 0,
+            frame_type: FrameType::Film,
+        }
     }
 }
 
