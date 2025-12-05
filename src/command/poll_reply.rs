@@ -2,6 +2,8 @@ use std::fmt;
 use std::net::Ipv4Addr;
 use std::str;
 
+use crate::ARTNET_PROTOCOL_VERSION;
+
 data_structure! {
     #[doc = "Gets send by the nodes in the network as a response to the Poll message"]
     pub struct PollReply {
@@ -109,7 +111,7 @@ impl Default for PollReply {
         PollReply {
             address: Ipv4Addr::from_bits(0),
             port: 6454,
-            version: [0; 2],
+            version: ARTNET_PROTOCOL_VERSION,
             port_address: [0; 2],
             oem: [0; 2],
             ubea_version: 0,
