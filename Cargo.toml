@@ -11,3 +11,6 @@ edition = "2018"
 [dependencies]
 bitflags = "2.4"
 byteorder = "1.4"
+
+[dev-dependencies]
+socket2 = "0.6"
