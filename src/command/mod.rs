@@ -2,6 +2,7 @@ mod output;
 mod poll;
 mod poll_reply;
 mod timecode;
+mod trigger;
 
 use crate::{Error, Result};
 use byteorder::{ByteOrder, LittleEndian, WriteBytesExt};
@@ -10,6 +11,7 @@ pub use self::output::{Output, PaddedData};
 pub use self::poll::Poll;
 pub use self::poll_reply::PollReply;
 pub use self::timecode::{FrameType, Timecode};
+pub use self::trigger::{Trigger, TriggerKey};
 
 /// The ArtCommand, to be used for ArtNet.
 ///
@@ -113,8 +115,8 @@ pub enum ArtCommand {
     /// [Not implemented] Used to synchronise real time date and clock
     OpTimeSync,
 
-    /// [Not implemented] Used to send trigger macros
-    OpTrigger,
+    /// Used to send trigger macros
+    OpTrigger(Trigger),
 
     /// [Not implemented] Requests a node's file list
     OpDirectory,
@@ -214,7 +216,9 @@ impl ArtCommand {
                 Timecode::from(data).map_err(|e| Error::OpcodeError("Timecode", Box::new(e)))?,
             ),
             0x9800 => ArtCommand::OpTimeSync,
-            0x9900 => ArtCommand::OpTrigger,
+            0x9900 => ArtCommand::OpTrigger(
+                Trigger::from(data).map_err(|e| Error::OpcodeError("Trigger", Box::new(e)))?,
+            ),
             0x9A00 => ArtCommand::OpDirectory,
             0x9B00 => ArtCommand::OpDirectoryReply,
             _ => return Err(Error::UnknownOpcode(code)),
@@ -255,7 +259,7 @@ impl ArtCommand {
             ArtCommand::OpMediaControlReply => (0x9300, Vec::new()),
             ArtCommand::OpTimeCode(timecode) => (0x9700, timecode.to_bytes()?),
             ArtCommand::OpTimeSync => (0x9800, Vec::new()),
-            ArtCommand::OpTrigger => (0x9900, Vec::new()),
+            ArtCommand::OpTrigger(trigger) => (0x9900, trigger.to_bytes()?),
             ArtCommand::OpDirectory => (0x9A00, Vec::new()),
             ArtCommand::OpDirectoryReply => (0x9B00, Vec::new()),
         })
