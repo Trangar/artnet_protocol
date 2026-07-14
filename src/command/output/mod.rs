@@ -6,7 +6,7 @@ use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
 use std::io::Cursor;
 
 data_structure! {
-    #[derive(Debug)]
+    #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Clone)]
     #[doc = "ArtDmx is the data packet used to transfer DMX512 data. The format is identical for Node to Controller, Node to Node and Controller to Node."]
     #[doc = ""]
     #[doc = "The Data is output through the DMX O/P port corresponding to the Universe setting. In the absence of received ArtDmx packets, each DMX O/P port re-transmits the same frame continuously. "]
@@ -49,7 +49,7 @@ impl Default for Output {
     }
 }
 
-#[derive(Default)]
+#[derive(Default, PartialEq, Eq, PartialOrd, Ord, Hash, Clone)]
 #[doc = "Data in an ArtDmx data packet."]
 pub struct PaddedData {
     inner: Vec<u8>,
@@ -137,7 +137,7 @@ impl<T> Convertable<T> for PaddedData {
     }
 }
 
-#[derive(Default)]
+#[derive(Default, PartialEq, Eq, PartialOrd, Ord, Hash, Clone, Copy)]
 pub struct BigEndianLength<T> {
     parsed_length: Option<u16>,
     _pd: std::marker::PhantomData<T>,
