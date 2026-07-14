@@ -5,6 +5,7 @@ use std::str;
 use crate::ARTNET_PROTOCOL_VERSION;
 
 data_structure! {
+    #[derive(PartialEq, Eq, PartialOrd, Ord, Hash, Clone, Copy)]
     #[doc = "Gets send by the nodes in the network as a response to the Poll message"]
     pub struct PollReply {
         #[doc = "The IP address of the node"]

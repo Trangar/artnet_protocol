@@ -1,7 +1,7 @@
 use crate::ArtTalkToMe;
 
 data_structure! {
-    #[derive(Debug)]
+    #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Clone, Copy)]
     #[doc = "Used to poll the nodes in the network"]
     pub struct Poll {
         #[doc = "Determines which version the server has. Will be ARTNET_PROTOCOL_VERSION by default"]

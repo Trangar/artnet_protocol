@@ -15,7 +15,7 @@ pub use self::timecode::{FrameType, Timecode};
 ///
 /// This struct implements an `write_to_buffer` and `from_buffer` function, to be used with UDP connections.
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Clone)]
 pub enum ArtCommand {
     /// A poll command, used to discover devices on the network
     Poll(Poll),

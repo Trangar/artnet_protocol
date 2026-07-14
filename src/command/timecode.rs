@@ -5,7 +5,7 @@ use byteorder::{ReadBytesExt, WriteBytesExt};
 use crate::{convert::Convertable, Error, Result, ARTNET_PROTOCOL_VERSION};
 
 data_structure! {
-    #[derive(Debug)]
+    #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Clone, Copy)]
     #[doc = "Used to for timecode on the network"]
     pub struct Timecode {
         #[doc = "Determines which version the server has. Will be ARTNET_PROTOCOL_VERSION by default"]
@@ -45,7 +45,7 @@ impl Default for Timecode {
 
 /// The framerate being used for a particular [Timecode] stream.
 #[repr(u8)]
-#[derive(Debug, PartialEq, Copy, Clone)]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Clone, Copy)]
 pub enum FrameType {
     #[doc = "FrameType Film 24fps"]
     Film = 0,
